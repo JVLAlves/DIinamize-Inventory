@@ -3,9 +3,7 @@ package functions
 import (
 	"log"
 	"os"
-	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -25,14 +23,6 @@ func Today() (Daytime string) {
 
 	return Daytime
 
-}
-
-//Essa função resume/facilita a aplicação de uma Expressão Regular (Regex)
-func RegexThis(regex string, target string) (result string) {
-	re := regexp.MustCompile(regex)
-	filter := re.FindAllString(target, -1)
-	dojoin := strings.Join(filter, "")
-	return dojoin
 }
 
 //Cria um Diretório no HOME do usuário
