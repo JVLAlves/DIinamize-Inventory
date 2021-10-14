@@ -29,7 +29,7 @@ type CollectionT struct {
 }
 
 //Modelo geral de RESPONSE
-type SnipeITHardwareResponseT struct {
+type SnipeitResponseT struct {
 	Status   string `json:"status"`
 	Messages string `json:"messages"`
 	Payload  struct {
@@ -75,7 +75,7 @@ type SnipeITHardwareResponseT struct {
 }
 
 //Modelo de respose do método PATCH
-type PatchRespose struct {
+type PatchResponseT struct {
 	Status   string `json:"status"`
 	Messages string `json:"messages"`
 	Payload  struct {
@@ -289,7 +289,7 @@ Ele recebe o Asset Tag único do Ativo existente e a variável que contém o tip
 Ao comparar ambos A. Existente e A. Criado ele destaca as disparidades e as retorna  em uma string Patchrequest, assim como um bool Needpatching que afirma se é necessário um PATCH ou não.
 
 OBS: Patchrequest é um JSON padronizado especificamente para o envio através do método PATCH.*/
-func Getbytag(IP string, assettag string, ativo CollectionT, f io.Writer) (Patchrequest string, Needpatching bool) {
+func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Patchrequest string, Needpatching bool) {
 
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
@@ -319,7 +319,7 @@ func Getbytag(IP string, assettag string, ativo CollectionT, f io.Writer) (Patch
 	//Billy Lowkão *easteregg*
 
 	//Variável Struct utilizada para a análise de disparidades entre Ativo Existente no inventário e Ativo Criado pela execução do programa
-	var Analyser CollectionT = CollectionT{}
+	var Analyser = NewActive()
 
 	//Variavel que contém os dados do Ativo Existente
 	var responsevar UniversalGetT
@@ -346,7 +346,7 @@ func Getbytag(IP string, assettag string, ativo CollectionT, f io.Writer) (Patch
 	var AnalyserIndex = []string{Analyser.Name, Analyser.AssetTag, Analyser.ModelID, Analyser.StatusID, Analyser.SnipeitMema3Ria7, Analyser.SnipeitSo8, Analyser.SnipeitHd9, Analyser.SnipeitHostname10, Analyser.SnipeitCPU11, Analyser.SnipeitModel12}
 
 	//Variável Array com as informações do Struct do Ativo Criado
-	var AtivoIndex = []string{ativo.Name, ativo.AssetTag, ativo.ModelID, ativo.StatusID, ativo.SnipeitMema3Ria7, ativo.SnipeitSo8, ativo.SnipeitHd9, ativo.SnipeitHostname10, ativo.SnipeitCPU11, ativo.SnipeitModel12}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12}
 
 	//Variavél Array que contém as alterações pendentes
 	var Pending []string
@@ -355,7 +355,7 @@ func Getbytag(IP string, assettag string, ativo CollectionT, f io.Writer) (Patch
 	var Patchresquest string = "{\"requestable\":false,\"archived\":false"
 
 	//Verifica as disparidades, destacando-as e criando o Patchrequest.
-	if Analyser != ativo {
+	if Analyser != Active {
 
 		//Cria tabela com os Cabeçalhos "Ativo Existente", "Ativo Criado"
 		tbl := table.New("Fieldname", "Ativo Existente", "Ativo Criado")
@@ -367,56 +367,56 @@ func Getbytag(IP string, assettag string, ativo CollectionT, f io.Writer) (Patch
 
 		//Analise de disparidades
 		for i := 0; i < len(AnalyserIndex); i++ {
-			if AnalyserIndex[i] != AtivoIndex[i] {
+			if AnalyserIndex[i] != ActiveIndex[i] {
 				var Fieldname string
 				switch i {
 				case 0:
 					//Caso a disparidade seja encontrada no Index [0] do Array, é necessário PATCH no campo NAME
-					Patchresquest += ",\"name\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"name\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "NAME"
 				case 1:
 					//Caso a disparidade seja encontrada no Index [1] do Array, é necessário PATCH no campo ASSET TAG
-					Patchresquest += ",\"asset_tag\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"asset_tag\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "ASSET TAG"
 				case 2:
 					//Caso a disparidade seja encontrada no Index [2] do Array, é necessário PATCH no campo MODEL ID
-					Patchresquest += ",\"model_id\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"model_id\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MODEL ID"
 				case 3:
 					//Caso a disparidade seja encontrada no Index [3] do Array, é necessário PATCH no campo STATUS ID
-					Patchresquest += ",\"status_id\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"status_id\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "STATUS ID"
 				case 4:
 					//Caso a disparidade seja encontrada no Index [4] do Array, é necessário PATCH no campo MEMÓRIA
-					Patchresquest += ",\"_snipeit_mema3ria_7\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_mema3ria_7\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MEMÓRIA"
 				case 5:
 					//Caso a disparidade seja encontrada no Index [5] do Array, é necessário PATCH no campo SISTEMA OPERACIONAL
-					Patchresquest += ",\"_snipeit_so_8\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_so_8\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "SISTEMA OPERACIONAL"
 				case 6:
 					//Caso a disparidade seja encontrada no Index [6] do Array, é necessário PATCH no campo HD
-					Patchresquest += ",\"_snipeit_hd_9\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_hd_9\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "HD"
 				case 7:
 					//Caso a disparidade seja encontrada no Index [7] do Array, é necessário PATCH no campo HOSTNAME
-					Patchresquest += ",\"_snipeit_hostname_10\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_hostname_10\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "HOSTNAME"
 				case 8:
 					//Caso a disparidade seja encontrada no Index [8] do Array, é necessário PATCH no campo CPU
-					Patchresquest += ",\"_snipeit_cpu_11\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_cpu_11\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "CPU"
 				case 9:
 					//Caso a disparidade seja encontrada no Index [9] do Array, é necessário PATCH no campo MODELO
-					Patchresquest += ",\"_snipeit_modelo_12\":\"" + AtivoIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_modelo_12\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MODEL"
 				}
 
 				//Acrescenta informações a tabela
-				tbl.AddRow(Fieldname, AnalyserIndex[i], AtivoIndex[i])
+				tbl.AddRow(Fieldname, AnalyserIndex[i], ActiveIndex[i])
 
 				//Acrescenta alterações a uma lista de pendências para expor visualmente depois
-				Pending = append(Pending, AtivoIndex[i])
+				Pending = append(Pending, ActiveIndex[i])
 			} else {
 				//Se não há disparidades, continue a análise
 				continue
@@ -492,9 +492,9 @@ func Getbytag(IP string, assettag string, ativo CollectionT, f io.Writer) (Patch
 Envia alterações feitas no ativo existente no inventário através de seu ID.*/
 func Patchbyid(id int, IP string, Patchresquest string) {
 	//Converte ID de string para int
-	strid := strconv.Itoa(id)
+	StringID := strconv.Itoa(id)
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
-	url := "http://" + IP + "/api/v1/hardware/" + strid
+	url := "http://" + IP + "/api/v1/hardware/" + StringID
 
 	payload := strings.NewReader(Patchresquest)
 	//REQUEST do GET
@@ -521,7 +521,7 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 	body, _ := ioutil.ReadAll(res.Body)
 
 	// Unmarshal do resultado do response
-	response := PatchRespose{}
+	response := PatchResponseT{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
@@ -576,9 +576,9 @@ func Verifybytag(assettag string, IP string) bool {
 /* POST
 
 Envia os dados do computador para o inventário no Snipeit. (Essa função recebe a variavel que recebe o tipo struct criado com os dados do computador)*/
-func PostSnipe(Ativo CollectionT, IP string, f io.Writer) {
+func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
-	var AtivoIndex = []string{Ativo.Name, Ativo.AssetTag, Ativo.ModelID, Ativo.StatusID, Ativo.SnipeitMema3Ria7, Ativo.SnipeitSo8, Ativo.SnipeitHd9, Ativo.SnipeitHostname10, Ativo.SnipeitCPU11, Ativo.SnipeitModel12}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12}
 
 	//URL da API SnipeIt
 	url := "http://" + IP + "/api/v1/hardware"
@@ -587,7 +587,7 @@ func PostSnipe(Ativo CollectionT, IP string, f io.Writer) {
 	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
 
 	//transformando em bytes a variável hw
-	hardwarePostJSON, err := json.Marshal(Ativo)
+	hardwarePostJSON, err := json.Marshal(Active)
 	//Tratando o ocasoional erro transformação da variável em byte
 	if err != nil {
 		panic(err)
@@ -624,7 +624,7 @@ func PostSnipe(Ativo CollectionT, IP string, f io.Writer) {
 	}
 
 	// Unmarshal do resultado do response
-	response := SnipeITHardwareResponseT{}
+	response := SnipeitResponseT{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
@@ -637,7 +637,7 @@ func PostSnipe(Ativo CollectionT, IP string, f io.Writer) {
 	//Implementação da formatação
 	tbl.WithWriter(f)
 
-	for i := 0; i < len(AtivoIndex); i++ {
+	for i := 0; i < len(ActiveIndex); i++ {
 
 		var Fieldname string
 		switch i {
@@ -673,7 +673,7 @@ func PostSnipe(Ativo CollectionT, IP string, f io.Writer) {
 		}
 
 		//Acrescenta informações a tabela
-		tbl.AddRow(Fieldname, AtivoIndex[i])
+		tbl.AddRow(Fieldname, ActiveIndex[i])
 
 	}
 
@@ -682,3 +682,11 @@ func PostSnipe(Ativo CollectionT, IP string, f io.Writer) {
 	//Printando o Response
 	fmt.Println("Response do POST:", response)
 }
+
+func NewActive() *CollectionT {
+	return &CollectionT{}
+}
+func NewSnipeitGetResponse() *SnipeitResponseT {
+	return &SnipeitResponseT{}
+}
+func NewSnipeitPatchResponse() *PatchResponseT { return &PatchResponseT{} }

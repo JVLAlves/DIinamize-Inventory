@@ -10,15 +10,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/JVLAlves/DinamizeSnipeitDataQuest/DataMission/Linux"
-	"github.com/JVLAlves/DinamizeSnipeitDataQuest/DataMission/MacOS"
-	"github.com/JVLAlves/DinamizeSnipeitDataQuest/DataMission/Windows"
-	functions "github.com/JVLAlves/DinamizeSnipeitDataQuest/Utilities/Functions"
-	snipe "github.com/JVLAlves/DinamizeSnipeitDataQuest/Utilities/SnipeMethods"
+	"github.com/JVLAlves/Dinamize-Inventory/DataMission/Linux"
+	"github.com/JVLAlves/Dinamize-Inventory/DataMission/MacOS"
+	"github.com/JVLAlves/Dinamize-Inventory/DataMission/Windows"
+	functions "github.com/JVLAlves/Dinamize-Inventory/Utilities/Functions"
+	snipe "github.com/JVLAlves/Dinamize-Inventory/Utilities/SnipeMethods"
+	globals "github.com/JVLAlves/Dinamize-Inventory/cmd"
+	"github.com/JVLAlves/Dinamize-Inventory/regexs"
 )
-
-//IP do inventário Snipeit
-var IP string = "10.20.1.79:8001" //IP do Invetário de TESTE
 
 //Função de execução do programa em MacOS
 func forMacOs(f *os.File) {
@@ -37,33 +36,34 @@ func forMacOs(f *os.File) {
 	MacOS.Running()
 
 	//Variavel de Contrato
-	var mac snipe.CollectionT = snipe.CollectionT{}
+	mac := snipe.NewActive()
 
-	//Populando Struct
+	//Populando Struct //tALVEZ PODE SER FEITA MELHOR, NÃO SEI.
 	mac.SnipeitCPU11 = MacOS.Infos[1]
 	mac.SnipeitHostname10 = MacOS.Infos[0]
 	mac.Name = MacOS.Infos[0]
 
 	//Passando Regex antes de popular informação de Memória
-	Memrexed := functions.RegexThis(`(^ ?\d{1,3}[,.]?\d*)`, MacOS.Infos[2])
+
+	MemoryRegex := regexs.RegexHDandMemory.FindStringSubmatch(MacOS.Infos[2])
 	//Convertendo response de string para float
-	Memnum, _ := strconv.ParseFloat(Memrexed, 64)
+	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
 	//Arredondando valor númerico da variável
-	Memround := math.Round(Memnum)
+	MemoryRounded := math.Round(MemoryFloat)
 	//Populando campo de memória com o valor tratado
-	mac.SnipeitMema3Ria7 = strconv.Itoa(int(Memround)) + "GB"
+	mac.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de HD
-	HDrexed := functions.RegexThis(`(^ ?\d{1,3}[,.]?\d*)`, MacOS.Infos[3])
+	HDRegex := regexs.RegexHDandMemory.FindStringSubmatch(MacOS.Infos[3])
 	//Convertendo response de string para float
-	HDnum, _ := strconv.ParseFloat(HDrexed, 64)
+	HDFloat, _ := strconv.ParseFloat(HDRegex[1], 64)
 	//Arredondando valor númerico da variável
-	HDround := math.Round(HDnum)
+	HDRounded := math.Round(HDFloat)
 	//Populando campo de HD com o valor tratado
-	mac.SnipeitHd9 = strconv.Itoa(int(HDround)) + "GB"
+	mac.SnipeitHd9 = strconv.Itoa(int(HDRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de Asset Tag
-	mac.AssetTag = functions.RegexThis(`\d`, MacOS.Infos[0])
+	mac.AssetTag = regexs.RegexAssettagDigit.FindString(MacOS.Infos[0])
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if mac.AssetTag == "" {
 		mac.AssetTag = "No Asset Tag"
@@ -72,57 +72,38 @@ func forMacOs(f *os.File) {
 	}
 
 	//Passando Regex antes de popular informação de Sistema Operacional
-	SOregexed := functions.RegexThis(`(^\d{2}\.\d+)`, MacOS.Infos[4])
+	SORegex := regexs.RegexMacOS.FindStringSubmatch(MacOS.Infos[4])
 	//Convertendo response de string para float
-	numSO, err := strconv.ParseFloat(SOregexed, 64)
+	SOFloat, err := strconv.ParseFloat(SORegex[1], 64)
 	//Tratando erro
 	if err != nil {
 		log.Fatalf("Erro na conversão do S.O. para float")
 	}
 
-	//Arredondamento da Versão MACOSX
-	if numSO >= 11.4 && numSO < 12.0 {
-		mac.SnipeitSo8 = "11.4"
+	//Verificação de Versão Menores (11.5.1) e substituição por Versões Maiores (11.4)
+
+	var SOString string
+	if SOFloat >= 11.4 && SOFloat < 12.0 {
+		SOString = "11.4"
+	} else {
+		SOString = SORegex[1]
 	}
 
-	//Alternando Versão Númerica (RETIRADA DO SITEMA) para Versão Nominal (DEFINIDA PELA APPLE INC.)
-	switch mac.SnipeitSo8 {
+	//Alternando Versão Númerica (RETIRADA DO SISTEMA) para Versão Nominal (DEFINIDA PELA APPLE INC.)
+	//ISTO PODE SER UM MAP[STRING]STRING. PARA DESCOBRIR A VERSÃO, PASSA-SE UM FOR SOBRE O MAP.
+	for in, v := range globals.MacOSVersions {
 
-	case "10.7":
-		mac.SnipeitSo8 = "MacOs Lion"
-	case "10.8":
-		mac.SnipeitSo8 = "MacOs Mountain Lion"
-	case "10.9":
-		mac.SnipeitSo8 = "MacOs Mavericks"
-	case "10.10":
-		mac.SnipeitSo8 = "MacOs Yosemite"
-	case "10.11":
-		mac.SnipeitSo8 = "MacOs El Capitan"
-	case "10.12":
-		mac.SnipeitSo8 = "MacOs Sierra"
-	case "10.13":
-		mac.SnipeitSo8 = "MacOs High Sierra"
-	case "10.14":
-		mac.SnipeitSo8 = "MacOs Mojave"
-	case "10.15":
-		mac.SnipeitSo8 = "MacOs Catalina"
-	case "11.4":
-		mac.SnipeitSo8 = "MacOs Big Sur"
-	default:
-		mac.SnipeitSo8 = "MacOs"
+		if SOString == in {
+			mac.SnipeitSo8 = v
+			break
+		}
+
 	}
 
 	//Entrada Default
-	var IDmodelo *string = &mac.ModelID
-	var IDstatus *string = &mac.StatusID
-	var modeloAtivo *string = &mac.SnipeitModel12
-
-	//identificando o Modelo
-	*IDmodelo = "8"
-	*modeloAtivo = "DNZ-COMPUTER"
-
-	//Status ID
-	*IDstatus = "7"
+	mac.ModelID = globals.ID_MODELO
+	mac.StatusID = globals.ID_STATUS
+	mac.SnipeitModel12 = globals.MODELO_ATIVO
 
 	//Resumo gráfico das informações coletadas.
 	fmt.Printf("NOME DO DISPOSITIVO: %v\n", mac.Name)
@@ -138,24 +119,24 @@ func forMacOs(f *os.File) {
 	fmt.Printf("DISCO: %v\n\n", mac.SnipeitHd9)
 
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
-	if snipe.Verifybytag(mac.AssetTag, IP) {
+	if snipe.Verifybytag(mac.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
 		fmt.Println("Enviando Ativo para o Snipeit ")
 
 		//Caso o Ativo não exista no sistema, as informações são enviadas para tal.
-		snipe.PostSnipe(mac, IP, f)
+		snipe.PostSnipe(mac, globals.IP_SNIPEIT, f)
 	} else {
 		//caso já exista, o programa procura por disparidades.
 		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
 		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
-		patch, boolean := snipe.Getbytag(IP, mac.AssetTag, mac, f)
-		if boolean {
+		PatchRequestUrl, IsNeeded := snipe.Getbytag(globals.IP_SNIPEIT, mac.AssetTag, mac, f)
+		if IsNeeded {
 			//Caso haja disparidades, o processo de PATCH é iniciado.
 			fmt.Println("\nPATCH necessário.")
 			fmt.Println("\nExecutando PATCH RESQUEST.")
 
-			id := snipe.Getidbytag(mac.AssetTag, IP)
-			snipe.Patchbyid(id, IP, patch)
+			id := snipe.Getidbytag(mac.AssetTag, globals.IP_SNIPEIT)
+			snipe.Patchbyid(id, globals.IP_SNIPEIT, PatchRequestUrl)
 
 		} else {
 			//Caso não haja disparidades... Nada acontece.
@@ -172,7 +153,7 @@ func forWindows(f *os.File) {
 	Windows.MainProgram()
 
 	//Variavel de Contrato
-	var win snipe.CollectionT = snipe.CollectionT{}
+	win := snipe.NewActive()
 
 	//Populando Struct
 	win.SnipeitCPU11 = Windows.Infos[3]
@@ -182,27 +163,25 @@ func forWindows(f *os.File) {
 	win.Name = Windows.Infos[0]
 
 	//Passando Regex antes de popular informação de Memória (COLETA: Primeiros três digitos com espaço em branco)
-	Memrexed := functions.RegexThis(`^[ ]*\d{1,3}`, Windows.Infos[2])
-	//Passando Regex antes de popular informação de Memória (COLETA: Somente os digitos)
-	Memrexed = functions.RegexThis(`\d`, Memrexed)
+	MemoryRegex := regexs.RegexHDandMemory.FindStringSubmatch(Windows.Infos[2])
 	//Convertendo response de string para float
-	Memnum, _ := strconv.ParseFloat(Memrexed, 64)
+	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
 	//Arredondando valor númerico da variável
-	Memround := math.Round(Memnum)
+	MemoryRounded := math.Round(MemoryFloat)
 	//Populando campo de memória com o valor tratado
-	win.SnipeitMema3Ria7 = strconv.Itoa(int(Memround)) + "GB"
+	win.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de HD
-	HDrexed := functions.RegexThis(`^[ ]*\d{1,3}`, Windows.Infos[4])
+	HDRegex := regexs.RegexHDandMemory.FindStringSubmatch(Windows.Infos[4])
 	//Convertendo response de string para float
-	HDnum, _ := strconv.ParseFloat(HDrexed, 64)
+	HDFloat, _ := strconv.ParseFloat(HDRegex[1], 64)
 	//Arredondando valor númerico da variável
-	HDround := math.Round(HDnum)
+	HDRounded := math.Round(HDFloat)
 	//Populando campo de HD com o valor tratado
-	win.SnipeitHd9 = strconv.Itoa(int(HDround)) + "GB"
+	win.SnipeitHd9 = strconv.Itoa(int(HDRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de Asset Tag
-	win.AssetTag = functions.RegexThis(`\d`, Windows.Infos[0])
+	win.AssetTag = regexs.RegexAssettagDigit.FindString(Windows.Infos[0])
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
 		win.AssetTag = "No Asset Tag"
@@ -211,15 +190,9 @@ func forWindows(f *os.File) {
 	}
 
 	//Entrada Default
-	var IDmodelo *string = &win.ModelID
-	var IDstatus *string = &win.StatusID
-	var modeloAtivo *string = &win.SnipeitModel12
-
-	//identificando o Modelo
-	*IDmodelo = "8"
-	*modeloAtivo = "DNZ-COMPUTER"
-	//Status ID
-	*IDstatus = "7"
+	win.ModelID = globals.ID_MODELO
+	win.StatusID = globals.ID_STATUS
+	win.SnipeitModel12 = globals.MODELO_ATIVO
 
 	//Resumo gráfico das informações coletadas.
 	fmt.Printf("NOME DO DISPOSITIVO: %v\n", win.Name)
@@ -235,12 +208,12 @@ func forWindows(f *os.File) {
 	fmt.Printf("DISCO: %v\n\n", win.SnipeitHd9)
 
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
-	if snipe.Verifybytag(win.AssetTag, IP) {
+	if snipe.Verifybytag(win.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
 		fmt.Println("Enviando Ativo para o Snipeit ")
 
 		//Caso o Ativo não exista no sistema, as informações são enviadas para tal.
-		snipe.PostSnipe(win, IP, f)
+		snipe.PostSnipe(win, globals.IP_SNIPEIT, f)
 
 		log.Println("Ativo Criado enviado para o sistema.")
 
@@ -248,14 +221,14 @@ func forWindows(f *os.File) {
 		//caso já exista, o programa procura por disparidades.
 		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
 		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
-		patch, boolean := snipe.Getbytag(IP, win.AssetTag, win, f)
-		if boolean {
+		PatchRequestUrl, IsNeeded := snipe.Getbytag(globals.IP_SNIPEIT, win.AssetTag, win, f)
+		if IsNeeded {
 			//Caso haja disparidades, o processo de PATCH é iniciado.
 			fmt.Println("\nPATCH necessário.")
 			fmt.Println("\nExecutando PATCH RESQUEST.")
 
-			id := snipe.Getidbytag(win.AssetTag, IP)
-			snipe.Patchbyid(id, IP, patch)
+			id := snipe.Getidbytag(win.AssetTag, globals.IP_SNIPEIT)
+			snipe.Patchbyid(id, globals.IP_SNIPEIT, PatchRequestUrl)
 
 		} else {
 			//Caso não haja disparidades... Nada acontece.
@@ -272,7 +245,7 @@ func forLinux(f *os.File) {
 	Linux.MainProgram()
 
 	//Variavel de Contrato
-	var lin snipe.CollectionT = snipe.CollectionT{}
+	lin := snipe.NewActive()
 
 	//Populando Struct
 	lin.SnipeitCPU11 = Linux.Infos[0]
@@ -281,26 +254,26 @@ func forLinux(f *os.File) {
 	lin.Name = Linux.Infos[3]
 
 	//Passando Regex antes de popular informação de HD (COLETA: Número com vírgula)
-	interHD := functions.RegexThis(`(^ ?\d{1,3}[,.]?\d*)`, Linux.Infos[4])
+	HDRegex := regexs.RegexHDandMemory.FindStringSubmatch(Linux.Infos[4])
 	//Separação do result
-	indexHD := strings.Split(interHD, ",")
+	HDSplitted := strings.Split(HDRegex[1], ",")
 	//Integração do result utilizando ponto (Padrão para conversão)
-	interHD = strings.Join(indexHD, ".")
+	HDJoined := strings.Join(HDSplitted, ".")
 	//Convertendo response de string para float
-	HDnum, _ := strconv.ParseFloat(interHD, 64)
+	HDFloat, _ := strconv.ParseFloat(HDJoined, 64)
 	//Arredondando valor númerico da variável
-	HDround := math.Round(HDnum)
+	HDRounded := math.Round(HDFloat)
 	//Populando campo de HD com o valor tratado
-	lin.SnipeitHd9 = strconv.Itoa(int(HDround)) + "GB"
+	lin.SnipeitHd9 = strconv.Itoa(int(HDRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de Memória
-	intermem := functions.RegexThis(`(^ ?\d{1,3}[,.]?\d*)`, Linux.Infos[1])
+	MemoryRegex := regexs.RegexHDandMemory.FindStringSubmatch(Linux.Infos[1])
 	//Convertendo response de string para float
-	Memnum, _ := strconv.ParseFloat(intermem, 64)
+	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
 	//Arredondando valor númerico da variável
-	Memround := math.Round(Memnum)
+	MemoryRounded := math.Round(MemoryFloat)
 	//Populando campo de memória com o valor tratado
-	lin.SnipeitMema3Ria7 = strconv.Itoa(int(Memround)) + "GB"
+	lin.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de Asset Tag
 	lin.AssetTag = functions.RegexThis(`\d`, Linux.Infos[3])
@@ -312,15 +285,9 @@ func forLinux(f *os.File) {
 	}
 
 	//Entrada Default
-	var IDmodelo *string = &lin.ModelID
-	var IDstatus *string = &lin.StatusID
-	var modeloAtivo *string = &lin.SnipeitModel12
-
-	//identificando o Modelo
-	*IDmodelo = "8"
-	*modeloAtivo = "DNZ-COMPUTER"
-	//Status ID
-	*IDstatus = "7"
+	lin.ModelID = globals.ID_MODELO
+	lin.StatusID = globals.ID_STATUS
+	lin.SnipeitModel12 = globals.MODELO_ATIVO
 
 	//Resumo gráfico das informações coletadas.
 	fmt.Printf("NOME DO DISPOSITIVO: %v\n", lin.Name)
@@ -336,25 +303,25 @@ func forLinux(f *os.File) {
 	fmt.Printf("DISCO: %v\n\n", lin.SnipeitHd9)
 
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
-	if snipe.Verifybytag(lin.AssetTag, IP) {
+	if snipe.Verifybytag(lin.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
 		fmt.Println("Enviando Ativo para o Snipeit ")
 
 		//Caso o Ativo não exista no sistema, as informações são enviadas para tal.
-		snipe.PostSnipe(lin, IP, f)
+		snipe.PostSnipe(lin, globals.IP_SNIPEIT, f)
 
 	} else {
 		//caso já exista, o programa procura por disparidades.
 		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
 		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
-		patch, boolean := snipe.Getbytag(IP, lin.AssetTag, lin, f)
-		if boolean {
+		PatchRequestUrl, IsNeeded := snipe.Getbytag(globals.IP_SNIPEIT, lin.AssetTag, lin, f)
+		if IsNeeded {
 			//Caso haja disparidades, o processo de PATCH é iniciado.
 			fmt.Println("\nPATCH necessário.")
 			fmt.Println("\nExecutando PATCH RESQUEST.")
 
-			id := snipe.Getidbytag(lin.AssetTag, IP)
-			snipe.Patchbyid(id, IP, patch)
+			id := snipe.Getidbytag(lin.AssetTag, globals.IP_SNIPEIT)
+			snipe.Patchbyid(id, globals.IP_SNIPEIT, PatchRequestUrl)
 
 		} else {
 			//Caso não haja disparidades... Nada acontece.
