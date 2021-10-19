@@ -105,23 +105,9 @@ func forMacOs(f *os.File) {
 	mac.StatusID = globals.ID_STATUS
 	mac.SnipeitModel12 = globals.MODELO_ATIVO
 
-	//Resumo gráfico das informações coletadas.
-	fmt.Printf("NOME DO DISPOSITIVO: %v\n", mac.Name)
-	fmt.Printf("ASSET TAG: %v\n", mac.AssetTag)
-	fmt.Printf("TIPO DE ATIVO: %v\n", mac.ModelID)
-	fmt.Printf("MODELO DO ATIVO: %v\n", mac.SnipeitModel12)
-	fmt.Printf("STATUS: %v\n\n", mac.StatusID)
-	fmt.Printf("DESCRIÇÃO DO ATIVO\n")
-	fmt.Printf("HOSTNAME: %v\n", mac.SnipeitHostname10)
-	fmt.Printf("S.O.: %v\n", mac.SnipeitSo8)
-	fmt.Printf("CPU: %v\n", mac.SnipeitCPU11)
-	fmt.Printf("MEMORIA RAM: %v\n", mac.SnipeitMema3Ria7)
-	fmt.Printf("DISCO: %v\n\n", mac.SnipeitHd9)
-
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
 	if snipe.Verifybytag(mac.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
-		fmt.Println("Enviando Ativo para o Snipeit ")
 
 		//Caso o Ativo não exista no sistema, as informações são enviadas para tal.
 		snipe.PostSnipe(mac, globals.IP_SNIPEIT, f)
@@ -129,11 +115,10 @@ func forMacOs(f *os.File) {
 		//caso já exista, o programa procura por disparidades.
 		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
 		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
-		PatchRequestUrl, IsNeeded := snipe.Getbytag(globals.IP_SNIPEIT, mac.AssetTag, mac, f)
+		ExistentActive := snipe.Getbytag(globals.IP_SNIPEIT, mac.AssetTag)
+		PatchRequestUrl, IsNeeded := mac.Compare(f, ExistentActive)
 		if IsNeeded {
 			//Caso haja disparidades, o processo de PATCH é iniciado.
-			fmt.Println("\nPATCH necessário.")
-			fmt.Println("\nExecutando PATCH RESQUEST.")
 
 			id := snipe.Getidbytag(mac.AssetTag, globals.IP_SNIPEIT)
 			snipe.Patchbyid(id, globals.IP_SNIPEIT, PatchRequestUrl)
@@ -194,23 +179,9 @@ func forWindows(f *os.File) {
 	win.StatusID = globals.ID_STATUS
 	win.SnipeitModel12 = globals.MODELO_ATIVO
 
-	//Resumo gráfico das informações coletadas.
-	fmt.Printf("NOME DO DISPOSITIVO: %v\n", win.Name)
-	fmt.Printf("ASSET TAG: %v\n", win.AssetTag)
-	fmt.Printf("TIPO DE ATIVO: %v\n", win.ModelID)
-	fmt.Printf("MODELO DO ATIVO: %v\n", win.SnipeitModel12)
-	fmt.Printf("STATUS: %v\n\n", win.StatusID)
-	fmt.Printf("DESCRIÇÃO DO ATIVO\n")
-	fmt.Printf("HOSTNAME: %v\n", win.SnipeitHostname10)
-	fmt.Printf("S.O.: %v\n", win.SnipeitSo8)
-	fmt.Printf("CPU: %v\n", win.SnipeitCPU11)
-	fmt.Printf("MEMORIA RAM: %v\n", win.SnipeitMema3Ria7)
-	fmt.Printf("DISCO: %v\n\n", win.SnipeitHd9)
-
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
 	if snipe.Verifybytag(win.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
-		fmt.Println("Enviando Ativo para o Snipeit ")
 
 		//Caso o Ativo não exista no sistema, as informações são enviadas para tal.
 		snipe.PostSnipe(win, globals.IP_SNIPEIT, f)
@@ -221,11 +192,10 @@ func forWindows(f *os.File) {
 		//caso já exista, o programa procura por disparidades.
 		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
 		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
-		PatchRequestUrl, IsNeeded := snipe.Getbytag(globals.IP_SNIPEIT, win.AssetTag, win, f)
+		ExistentActive := snipe.Getbytag(globals.IP_SNIPEIT, win.AssetTag)
+		PatchRequestUrl, IsNeeded := win.Compare(f, ExistentActive)
 		if IsNeeded {
 			//Caso haja disparidades, o processo de PATCH é iniciado.
-			fmt.Println("\nPATCH necessário.")
-			fmt.Println("\nExecutando PATCH RESQUEST.")
 
 			id := snipe.Getidbytag(win.AssetTag, globals.IP_SNIPEIT)
 			snipe.Patchbyid(id, globals.IP_SNIPEIT, PatchRequestUrl)
@@ -276,7 +246,7 @@ func forLinux(f *os.File) {
 	lin.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de Asset Tag
-	lin.AssetTag = functions.RegexThis(`\d`, Linux.Infos[3])
+	lin.AssetTag = regexs.RegexAssettagDigit.FindString(Linux.Infos[3])
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if lin.AssetTag == "" {
 		lin.AssetTag = "No Asset Tag"
@@ -289,37 +259,21 @@ func forLinux(f *os.File) {
 	lin.StatusID = globals.ID_STATUS
 	lin.SnipeitModel12 = globals.MODELO_ATIVO
 
-	//Resumo gráfico das informações coletadas.
-	fmt.Printf("NOME DO DISPOSITIVO: %v\n", lin.Name)
-	fmt.Printf("ASSET TAG: %v\n", lin.AssetTag)
-	fmt.Printf("TIPO DE ATIVO: %v\n", lin.ModelID)
-	fmt.Printf("MODELO DO ATIVO: %v\n", lin.SnipeitModel12)
-	fmt.Printf("STATUS: %v\n\n", lin.StatusID)
-	fmt.Printf("DESCRIÇÃO DO ATIVO\n")
-	fmt.Printf("HOSTNAME: %v\n", lin.SnipeitHostname10)
-	fmt.Printf("S.O.: %v\n", lin.SnipeitSo8)
-	fmt.Printf("CPU: %v\n", lin.SnipeitCPU11)
-	fmt.Printf("MEMORIA RAM: %v\n", lin.SnipeitMema3Ria7)
-	fmt.Printf("DISCO: %v\n\n", lin.SnipeitHd9)
-
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
 	if snipe.Verifybytag(lin.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
-		fmt.Println("Enviando Ativo para o Snipeit ")
 
 		//Caso o Ativo não exista no sistema, as informações são enviadas para tal.
 		snipe.PostSnipe(lin, globals.IP_SNIPEIT, f)
 
 	} else {
 		//caso já exista, o programa procura por disparidades.
-		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
-		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
-		PatchRequestUrl, IsNeeded := snipe.Getbytag(globals.IP_SNIPEIT, lin.AssetTag, lin, f)
+		//log.Println("Um Ativo semelhante foi encontrado no sistema."
+
+		ExistentActive := snipe.Getbytag(globals.IP_SNIPEIT, lin.AssetTag)
+		PatchRequestUrl, IsNeeded := lin.Compare(f, ExistentActive)
 		if IsNeeded {
 			//Caso haja disparidades, o processo de PATCH é iniciado.
-			fmt.Println("\nPATCH necessário.")
-			fmt.Println("\nExecutando PATCH RESQUEST.")
-
 			id := snipe.Getidbytag(lin.AssetTag, globals.IP_SNIPEIT)
 			snipe.Patchbyid(id, globals.IP_SNIPEIT, PatchRequestUrl)
 
@@ -335,7 +289,7 @@ func forLinux(f *os.File) {
 func main() {
 
 	//Cria tanto a pasta para logs quanto o arquivo inicial de logs
-	f := functions.ActiveLogs()
+	f := functions.InitLogs()
 
 	//Log de inicialização
 	log.Printf("Inicio de execução.")
@@ -354,6 +308,5 @@ func main() {
 	}
 
 	//mensagem de encerramento
-	fmt.Println("\n\nObrigado pela paciência! (FIM)")
 	log.Printf("Fim de execução.")
 }

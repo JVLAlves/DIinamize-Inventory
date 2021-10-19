@@ -38,7 +38,7 @@ func CreateDir(wg *sync.WaitGroup) {
 }
 
 //Cria um arquivo de logs
-func ActiveLogs() (f *os.File) {
+func InitLogs() (f *os.File) {
 
 	var errboolean bool = true
 	_, err := os.Stat(os.Getenv("USERNAME") + "_logs")

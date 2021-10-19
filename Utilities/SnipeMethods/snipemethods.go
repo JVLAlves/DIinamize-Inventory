@@ -289,7 +289,7 @@ Ele recebe o Asset Tag único do Ativo existente e a variável que contém o tip
 Ao comparar ambos A. Existente e A. Criado ele destaca as disparidades e as retorna  em uma string Patchrequest, assim como um bool Needpatching que afirma se é necessário um PATCH ou não.
 
 OBS: Patchrequest é um JSON padronizado especificamente para o envio através do método PATCH.*/
-func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Patchrequest string, Needpatching bool) {
+func Getbytag(IP string, assettag string) *CollectionT {
 
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
@@ -316,11 +316,6 @@ func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Pat
 		log.Println("Error on parsing response.\n[ERROR] -", err)
 	}
 
-	//Billy Lowkão *easteregg*
-
-	//Variável Struct utilizada para a análise de disparidades entre Ativo Existente no inventário e Ativo Criado pela execução do programa
-	var Analyser = NewActive()
-
 	//Variavel que contém os dados do Ativo Existente
 	var responsevar UniversalGetT
 
@@ -330,20 +325,30 @@ func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Pat
 		log.Printf("Reading body failed: %s", err)
 	}
 
-	//Armazena as informações selecioandas do Response na variável Struct de análise
-	Analyser.Name = responsevar.Name
-	Analyser.AssetTag = responsevar.AssetTag
-	Analyser.ModelID = strconv.Itoa(responsevar.Model.ID)
-	Analyser.StatusID = strconv.Itoa(responsevar.StatusLabel.ID)
-	Analyser.SnipeitMema3Ria7 = responsevar.CustomFields.MemRia.Value
-	Analyser.SnipeitSo8 = responsevar.CustomFields.SO.Value
-	Analyser.SnipeitHd9 = responsevar.CustomFields.Hd.Value
-	Analyser.SnipeitHostname10 = responsevar.CustomFields.Hostname.Value
-	Analyser.SnipeitCPU11 = responsevar.CustomFields.CPU.Value
-	Analyser.SnipeitModel12 = responsevar.CustomFields.Modelo.Value
+	//Variável Struct utilizada para a análise de disparidades entre Ativo Existente no inventário e Ativo Criado pela execução do programa
+	var ExistentActive CollectionT
 
+	//Armazena as informações selecioandas do Response na variável Struct de análise
+	ExistentActive.Name = responsevar.Name
+	ExistentActive.AssetTag = responsevar.AssetTag
+	ExistentActive.ModelID = strconv.Itoa(responsevar.Model.ID)
+	ExistentActive.StatusID = strconv.Itoa(responsevar.StatusLabel.ID)
+	ExistentActive.SnipeitMema3Ria7 = responsevar.CustomFields.MemRia.Value
+	ExistentActive.SnipeitSo8 = responsevar.CustomFields.SO.Value
+	ExistentActive.SnipeitHd9 = responsevar.CustomFields.Hd.Value
+	ExistentActive.SnipeitHostname10 = responsevar.CustomFields.Hostname.Value
+	ExistentActive.SnipeitCPU11 = responsevar.CustomFields.CPU.Value
+	ExistentActive.SnipeitModel12 = responsevar.CustomFields.Modelo.Value
+
+	return &ExistentActive
+
+}
+
+func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Patchrequest string, Needpatching bool) {
+
+	var IsDifferent bool = false
 	//Variável Array com as informações do Struct de análise
-	var AnalyserIndex = []string{Analyser.Name, Analyser.AssetTag, Analyser.ModelID, Analyser.StatusID, Analyser.SnipeitMema3Ria7, Analyser.SnipeitSo8, Analyser.SnipeitHd9, Analyser.SnipeitHostname10, Analyser.SnipeitCPU11, Analyser.SnipeitModel12}
+	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMema3Ria7, ExistentActive.SnipeitSo8, ExistentActive.SnipeitHd9, ExistentActive.SnipeitHostname10, ExistentActive.SnipeitCPU11, ExistentActive.SnipeitModel12}
 
 	//Variável Array com as informações do Struct do Ativo Criado
 	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12}
@@ -355,19 +360,26 @@ func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Pat
 	var Patchresquest string = "{\"requestable\":false,\"archived\":false"
 
 	//Verifica as disparidades, destacando-as e criando o Patchrequest.
-	if Analyser != Active {
+	for in, v := range ActiveIndex {
+
+		if v != ExistentActiveIndex[in] {
+			IsDifferent = true
+			break
+		}
+
+	}
+	if IsDifferent {
 
 		//Cria tabela com os Cabeçalhos "Ativo Existente", "Ativo Criado"
 		tbl := table.New("Fieldname", "Ativo Existente", "Ativo Criado")
 
 		//Implementação da formatação
 		tbl.WithWriter(f)
-
 		fmt.Fprintln(f, "Disparidades encontradas.")
 
 		//Analise de disparidades
-		for i := 0; i < len(AnalyserIndex); i++ {
-			if AnalyserIndex[i] != ActiveIndex[i] {
+		for i := 0; i < len(ExistentActiveIndex); i++ {
+			if ExistentActiveIndex[i] != ActiveIndex[i] {
 				var Fieldname string
 				switch i {
 				case 0:
@@ -413,7 +425,7 @@ func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Pat
 				}
 
 				//Acrescenta informações a tabela
-				tbl.AddRow(Fieldname, AnalyserIndex[i], ActiveIndex[i])
+				tbl.AddRow(Fieldname, ExistentActiveIndex[i], ActiveIndex[i])
 
 				//Acrescenta alterações a uma lista de pendências para expor visualmente depois
 				Pending = append(Pending, ActiveIndex[i])
@@ -440,7 +452,7 @@ func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Pat
 		//Implementação da formatação
 		tbl.WithWriter(f)
 
-		for i := 0; i < len(AnalyserIndex); i++ {
+		for i := 0; i < len(ExistentActiveIndex); i++ {
 
 			var Fieldname string
 			switch i {
@@ -476,7 +488,7 @@ func Getbytag(IP string, assettag string, Active *CollectionT, f io.Writer) (Pat
 			}
 
 			//Acrescenta informações a tabela
-			tbl.AddRow(Fieldname, AnalyserIndex[i])
+			tbl.AddRow(Fieldname, ExistentActiveIndex[i])
 
 		}
 
