@@ -66,7 +66,7 @@ func MainProgram() {
 		fmt.Println(err)
 	}
 	//Compilando o regex do CPU.
-	RegexCPUWin := regexs.RegexCPUWin
+	RegexCPUWin := regexs.RegexCPU
 	//Aplicando o regex ao retorno obtido na vairável
 	resultCPUWin := RegexCPUWin.FindStringSubmatch(cpu)
 	//Coletando o index 1 do slice string obtido após aplicação do regexp visto que o index 0 é nulo!

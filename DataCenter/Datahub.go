@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/JVLAlves/Dinamize-Inventory/DataMission/Linux"
@@ -202,31 +201,11 @@ func forLinux(f *os.File) {
 	lin.SnipeitSo8 = Linux.Infos[2]
 	lin.SnipeitHostname10 = Linux.Infos[3]
 	lin.Name = Linux.Infos[3]
-
-	//Passando Regex antes de popular informação de HD (COLETA: Número com vírgula)
-	HDRegex := regexs.RegexHDandMemory.FindStringSubmatch(Linux.Infos[4])
-	//Separação do result
-	HDSplitted := strings.Split(HDRegex[1], ",")
-	//Integração do result utilizando ponto (Padrão para conversão)
-	HDJoined := strings.Join(HDSplitted, ".")
-	//Convertendo response de string para float
-	HDFloat, _ := strconv.ParseFloat(HDJoined, 64)
-	//Arredondando valor númerico da variável
-	HDRounded := math.Round(HDFloat)
-	//Populando campo de HD com o valor tratado
-	lin.SnipeitHd9 = strconv.Itoa(int(HDRounded)) + "GB"
-
-	//Passando Regex antes de popular informação de Memória
-	MemoryRegex := regexs.RegexHDandMemory.FindStringSubmatch(Linux.Infos[1])
-	//Convertendo response de string para float
-	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
-	//Arredondando valor númerico da variável
-	MemoryRounded := math.Round(MemoryFloat)
-	//Populando campo de memória com o valor tratado
-	lin.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
+	lin.SnipeitHd9 = Linux.Infos[5]
+	lin.SnipeitMema3Ria7 = Linux.Infos[1]
 
 	//Passando Regex antes de popular informação de Asset Tag
-	lin.AssetTag = regexs.RegexAssettagDigit.FindString(Linux.Infos[3])
+	lin.AssetTag = Linux.Infos[4]
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if lin.AssetTag == "" {
 		lin.AssetTag = "No Asset Tag"
@@ -262,7 +241,6 @@ func forLinux(f *os.File) {
 			fmt.Fprintln(f, "\nSem alterações")
 		}
 	}
-
 }
 
 //função Principal do programa

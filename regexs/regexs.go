@@ -9,7 +9,7 @@ var (
 	RegexAssettagDigit = regexp.MustCompile(`\d{5}`)
 	RegexMacOS         = regexp.MustCompile(`\s*(^\d{2}\.\d+)`)
 	RegexpHostnameWin  = regexp.MustCompile(`[[:upper:]]{2,}[.\-|[:alnum:])]+[[:alnum:]]+[^\s]`)
-	RegexCPUWin        = regexp.MustCompile(`([[:upper:]]+[a-z]+\(.\)[[:alpha:]]*[()]*.*[^\s])`)
+	RegexCPU           = regexp.MustCompile(`([[:upper:]]+[a-z]+\(.\)[[:alpha:]]*[()]*.*[^\s])`)
 	RegexHDWin         = regexp.MustCompile(`\d+[^\s]`)
 	RegexSOWin         = regexp.MustCompile(`([[:alpha:]]*\s?Windows\s.*[^\s])`)
 	//comentário

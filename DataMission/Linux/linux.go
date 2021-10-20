@@ -2,12 +2,14 @@ package Linux
 
 import (
 	"bufio"
-	"fmt"
 	"log"
+	"math"
 	"os"
 	"os/exec"
-	"regexp"
+	"strconv"
 	"strings"
+
+	"github.com/JVLAlves/Dinamize-Inventory/regexs"
 )
 
 //Variáveis de armazenamento dos dados da máquina
@@ -18,7 +20,7 @@ func MainProgram() {
 	// Abrindo o Arquivo CPU
 	file, err := os.Open("/proc/cpuinfo")
 	if err != nil {
-		log.Fatalf("Error when opening file: %s", err)
+		log.Fatalf("Erro ao abrir o arquivo: %s", err)
 	}
 
 	//Lendo o Arquivo CPU
@@ -26,175 +28,98 @@ func MainProgram() {
 
 	//Lendo linha a linha
 	for fileScanner.Scan() {
-		fmt.Println(fileScanner.Text())
 		Linhas = append(Linhas, fileScanner.Text())
 
 	}
 	// adicionando informação encontrada no arquivo CPU a variável
-	var infostemp []string
-	infostemp = append(infostemp, Linhas[4])
+	var ProcFileinfo []string
+	ProcFileinfo = append(ProcFileinfo, Linhas[4])
 
-	re := regexp.MustCompile(`(Intel).+`)
-	for i := 0; i < len(infostemp); i++ {
-		Abc := re.FindAllString(infostemp[i], -1)
-		justString := strings.Join(Abc, "")
-		if justString != "" {
-			Infos = append(Infos, justString)
+	for _, v := range ProcFileinfo { //
+
+		CPU := regexs.RegexCPU.FindString(v)
+		if CPU != "" {
+			Infos = append(Infos, CPU)
+			break
 		}
-		justString = ""
+
 	}
 
-	//Tratando o ocasoional erro da leitura do arquivo
+	//Tratando o ocasional erro da leitura do arquivo
 	if err := fileScanner.Err(); err != nil {
-		log.Fatalf("Error while reading file: %s", err)
+		log.Fatalf("Erro ao ler o arquivo: %s", err)
 	}
 
 	//fechando o arquivo lido
 	file.Close()
 
 	//Executa o comando Script para escrever a sessão do terminal em arquivo txt (Tamanho do disco)
-	cmd := exec.Command("script", "-c", "free -h |grep Mem |awk '{print $2}'", "tamanhoDoHd.txt")
-	_, _ = cmd.Output()
+	Memorycmd := exec.Command("bash", "-c", "free -h |grep Mem |awk '{print $2}'")
+	MemorycmdByt, err := Memorycmd.Output()
 
-	// abrindo o arquiuvo criado "tamanhoDoHd.txt"
-	file, err = os.Open("tamanhoDoHd.txt")
-
-	//Tratando o ocasoional erro da leitura do arquivo
 	if err != nil {
-		log.Fatalf("Error when opening file: %s", err)
+		log.Println("Erro na execução do comando de memória: ", err)
 	}
 
-	//Lendo o arquivo "tamanhoDoHd.txt"
-	fileScanner = bufio.NewScanner(file)
+	MemorycmdBody := string(MemorycmdByt)
 
-	//Limpa o Array das Linhas
-	Linhas = []string{}
-
-	//Lendo linha a linha
-	for fileScanner.Scan() {
-		fmt.Println(fileScanner.Text())
-		Linhas = append(Linhas, fileScanner.Text())
-
-	}
+	//Passando Regex antes de popular informação de Memória
+	MemoryRegex := regexs.RegexHDandMemory.FindStringSubmatch(MemorycmdBody)
+	//Convertendo response de string para float
+	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
+	//Arredondando valor númerico da variável
+	MemoryRounded := math.Round(MemoryFloat)
+	//Populando campo de memória com o valor tratado
+	Memory := strconv.Itoa(int(MemoryRounded)) + "GB"
 
 	// adicionando informação encontrada no arquivo "tamanhoDoHd.txt" a variável
-	Infos = append(Infos, Linhas[1])
-
-	//Tratando o ocasoional erro da leitura do arquivo
-	if err := fileScanner.Err(); err != nil {
-		log.Fatalf("Error while reading file: %s", err)
-	}
-
-	//fechando o arquivo lido
-	file.Close()
+	Infos = append(Infos, Memory)
 
 	//Executa o comando Script para escrever a sessão do terminal em arquivo txt (S.O.)
-	cmd = exec.Command("script", "-c", "lsb_release -d |grep Description |awk '{print $2,$3,$4}'", "SO.txt")
-	_, _ = cmd.Output()
+	SOcmd := exec.Command("bash", "-c", "lsb_release -d |grep Description |awk '{print $2,$3,$4}'")
+	SOcmdByt, err := SOcmd.Output()
 
-	// abrindo o arquiuvo criado "S0.txt"
-	file, err = os.Open("SO.txt")
-
-	//Tratando o ocasoional erro da leitura do arquivo
 	if err != nil {
-		log.Fatalf("Error when opening file: %s", err)
+		log.Println("Erro na execução do comando de SO: ", err)
 	}
 
-	//Lendo o arquivo "SO.txt"
-	fileScanner = bufio.NewScanner(file)
-
-	//Limpa o Array das Linhas
-	Linhas = []string{}
-
-	//Lendo linha a linha
-	for fileScanner.Scan() {
-		fmt.Println(fileScanner.Text())
-		Linhas = append(Linhas, fileScanner.Text())
-
-	}
-
+	SOcmdBody := string(SOcmdByt)
+	SO := strings.TrimSpace(SOcmdBody)
 	// adicionando informação encontrada no arquivo "SO.txt" a variável
-	Infos = append(Infos, Linhas[1])
-
-	//Tratando o ocasoional erro da leitura do arquivo
-	if err := fileScanner.Err(); err != nil {
-		log.Fatalf("Error while reading file: %s", err)
-	}
-
-	//fechando o arquivo lido
-	file.Close()
+	Infos = append(Infos, SO)
 
 	//Executa o comando Script para escrever a sessão do terminal em arquivo txt (Hostname)
-	cmd = exec.Command("script", "-c", "hostname", "hostname.txt")
-	_, _ = cmd.Output()
+	Hostcmd := exec.Command("bash", "-c", "hostname", "hostname.txt")
+	HostcmdByt, _ := Hostcmd.Output()
+	HostcmdBody := string(HostcmdByt)
+	Host := strings.TrimSpace(HostcmdBody)
+	Infos = append(Infos, Host)
 
-	// abrindo o arquiuvo criado "Hostname.txt"
-	file, err = os.Open("hostname.txt")
-
-	//Tratando o ocasoional erro da leitura do arquivo
-	if err != nil {
-		log.Fatalf("Error when opening file: %s", err)
-	}
-
-	//Lendo o arquivo "Hostname.txt"
-	fileScanner = bufio.NewScanner(file)
-
-	//Limpa o Array das Linhas
-	Linhas = []string{}
-
-	//Lendo linha a linha
-	for fileScanner.Scan() {
-		fmt.Println(fileScanner.Text())
-		Linhas = append(Linhas, fileScanner.Text())
-
-	}
-
-	Infos = append(Infos, Linhas[1])
-
-	// adicionando informação encontrada no arquivo "Hostname.txt" a variável
-	if err := fileScanner.Err(); err != nil {
-		log.Fatalf("Error while reading file: %s", err)
-	}
-
-	//fechando o arquivo lido
-	file.Close()
+	Assettag := regexs.RegexAssettagDigit.FindString(Host)
+	Infos = append(Infos, Assettag)
 
 	//Executa o comando Script para escrever a sessão do terminal em arquivo txt (Tamanho do Disco)
-	cmd = exec.Command("script", "-c", "lsblk |grep disk |awk '{print $4}'", "tamanhoDoDisco.txt")
-	_, _ = cmd.Output()
+	cmd := exec.Command("bash", "-c", "lsblk |grep disk |awk '{print $4}'", "tamanhoDoDisco.txt")
+	HDcmdByt, err := cmd.Output()
 
-	// abrindo o arquiuvo criado "tamanhoDoDisco.txt"
-	file, err = os.Open("tamanhoDoDisco.txt")
-
-	//Tratando o ocasoional erro da leitura do arquivo
 	if err != nil {
-		log.Fatalf("Error when opening file: %s", err)
+		log.Println("Erro na execução do comando de HD: ", err)
 	}
 
-	fileScanner = bufio.NewScanner(file)
-	Linhas = []string{}
-
-	//Lendo linha a linha
-	for fileScanner.Scan() {
-		fmt.Println(fileScanner.Text())
-		Linhas = append(Linhas, fileScanner.Text())
-
-	}
-
+	HDcmdBody := string(HDcmdByt)
+	HD := strings.TrimSpace(HDcmdBody)
+	//Passando Regex antes de popular informação de HD (COLETA: Número com vírgula)
+	HDRegex := regexs.RegexHDandMemory.FindStringSubmatch(HD)
+	//Separação do result
+	HDSplitted := strings.Split(HDRegex[1], ",")
+	//Integração do result utilizando ponto (Padrão para conversão)
+	HDJoined := strings.Join(HDSplitted, ".")
+	//Convertendo response de string para float
+	HDFloat, _ := strconv.ParseFloat(HDJoined, 64)
+	//Arredondando valor númerico da variável
+	HDRounded := math.Round(HDFloat)
+	HD = strconv.Itoa(int(HDRounded)) + "GB"
 	// adicionando informação encontrada no arquivo "tamanhoDoDisco.txt" a variável
-	Infos = append(Infos, Linhas[1])
+	Infos = append(Infos, HD)
 
-	//Tratando o ocasoional erro da leitura do arquivo
-	if err := fileScanner.Err(); err != nil {
-		log.Fatalf("Error while reading file: %s", err)
-	}
-
-	//fechando o arquivo lido
-	file.Close()
-
-	cmd = exec.Command("rm", "tamanhoDoHd.txt", "SO.txt", "hostname.txt", "tamanhoDoDisco.txt")
-	_, _ = cmd.Output()
-
-	cmd = exec.Command("rm", "tamanhoDoHd.txt", "SO.txt", "hostname.txt", "tamanhoDoDisco.txt")
-	_, _ = cmd.Output()
 }
