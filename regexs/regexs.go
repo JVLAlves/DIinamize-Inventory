@@ -12,5 +12,6 @@ var (
 	RegexCPUWin        = regexp.MustCompile(`([[:upper:]]+[a-z]+\(.\)[[:alpha:]]*[()]*.*[^\s])`)
 	RegexHDWin         = regexp.MustCompile(`\d+[^\s]`)
 	RegexSOWin         = regexp.MustCompile(`([[:alpha:]]*\s?Windows\s.*[^\s])`)
-	RegexMemoriaWin    = regexp.MustCompile(`Memória física total:\s+(\d+[.,]\d+)\s(\w+[^\s])`)
+	//comentário
+	RegexMemoriaWin = regexp.MustCompile(`Memória física total:\s+(\d+[.,]\d+)\s(\w+[^\s])`)
 )
