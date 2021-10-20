@@ -141,35 +141,17 @@ func forWindows(f *os.File) {
 	win := snipe.NewActive()
 
 	//Populando Struct
-	win.SnipeitCPU11 = Windows.Infos[3]
-	win.SnipeitMema3Ria7 = Windows.Infos[2]
-	win.SnipeitSo8 = Windows.Infos[1]
+	win.SnipeitCPU11 = Windows.Infos[2]
+	win.SnipeitMema3Ria7 = Windows.Infos[5] + "GB"
+	win.SnipeitSo8 = Windows.Infos[4]
 	win.SnipeitHostname10 = Windows.Infos[0]
 	win.Name = Windows.Infos[0]
+	win.SnipeitHd9 = Windows.Infos[3] + "GB"
+	win.AssetTag = Windows.Infos[1]
 
-	//Passando Regex antes de popular informação de Memória (COLETA: Primeiros três digitos com espaço em branco)
-	MemoryRegex := regexs.RegexHDandMemory.FindStringSubmatch(Windows.Infos[2])
-	//Convertendo response de string para float
-	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
-	//Arredondando valor númerico da variável
-	MemoryRounded := math.Round(MemoryFloat)
-	//Populando campo de memória com o valor tratado
-	win.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
-
-	//Passando Regex antes de popular informação de HD
-	HDRegex := regexs.RegexHDandMemory.FindStringSubmatch(Windows.Infos[4])
-	//Convertendo response de string para float
-	HDFloat, _ := strconv.ParseFloat(HDRegex[1], 64)
-	//Arredondando valor númerico da variável
-	HDRounded := math.Round(HDFloat)
-	//Populando campo de HD com o valor tratado
-	win.SnipeitHd9 = strconv.Itoa(int(HDRounded)) + "GB"
-
-	//Passando Regex antes de popular informação de Asset Tag
-	win.AssetTag = regexs.RegexAssettagDigit.FindString(Windows.Infos[0])
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
-		win.AssetTag = "No Asset Tag"
+		win.AssetTag = "Inválido"
 		log.Printf("Nenhum Asset Tag foi defino, pois nenhuma sequência numérica foi encontrada no HOSTNAME: %v", Windows.Infos[0])
 
 	}
@@ -190,8 +172,6 @@ func forWindows(f *os.File) {
 
 	} else {
 		//caso já exista, o programa procura por disparidades.
-		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
-		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
 		ExistentActive := snipe.Getbytag(globals.IP_SNIPEIT, win.AssetTag)
 		PatchRequestUrl, IsNeeded := win.Compare(f, ExistentActive)
 		if IsNeeded {

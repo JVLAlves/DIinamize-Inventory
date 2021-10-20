@@ -1,4 +1,4 @@
-package main
+package Windows
 
 import (
 	"bytes"
@@ -37,7 +37,7 @@ func (p *PowerShell) Execute(args ...string) (stdOut string, stdErr string, err 
 	stdOut, stdErr = stdout.String(), stderr.String()
 	return
 }
-func main() {
+func MainProgram() {
 	posh := New()
 
 	//APLICANDO OS COMANDO LITERAIS DO POWERSHELL
@@ -54,8 +54,10 @@ func main() {
 	resultHostNameWin := RegexpHostnameWin.FindStringSubmatch(hostname)
 	//Coletando o index 0 do slice string obtido após aplicação do regexp
 	regexedHostNameWin := resultHostNameWin[0]
+	RegexedAssettagWin := regexs.RegexAssettagDigit.FindString(regexedHostNameWin)
 	//Guardando o valor final no array String Infos
 	Infos = append(Infos, regexedHostNameWin)
+	Infos = append(Infos, RegexedAssettagWin)
 
 	//Aplicando comando para coletar o CPU e salvando o stdout em uma variável
 	cpu, _, err := posh.Execute("Get-WmiObject -Class Win32_Processor -ComputerName . | Select-Object -Property \"name\"")
@@ -120,11 +122,9 @@ func main() {
 	resultMemoriaWin := RegexMemoriaWin.FindStringSubmatch(memoria)
 	//Coletando o index 1 do slice string obtido após aplicação do regexp visto que o index 0 é nulo!
 	regexedMemoriaWin := resultMemoriaWin[1]
+	FloatMemoriaWin, _ := strconv.ParseFloat(regexedMemoriaWin, 64)
+	RoundedMemoriaWin := strconv.FormatFloat(math.Round(FloatMemoriaWin), 'f', -1, 64)
 	//Guardando o valor final no array String Infos
-	Infos = append(Infos, regexedMemoriaWin)
-
-	for i := 0; i < len(Infos); i++ {
-		fmt.Println(Infos[i])
-	}
+	Infos = append(Infos, RoundedMemoriaWin)
 
 }
