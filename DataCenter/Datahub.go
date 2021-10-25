@@ -173,7 +173,7 @@ func forWindows(f *os.File) {
 	win.Name = Windows.Infos[0]
 	win.SnipeitHd9 = Windows.Infos[3] + "GB"
 	win.AssetTag = Windows.Infos[1]
-
+	win.SnipeitProgramasInstalados15 = Windows.ProgramasWin
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
 		win.AssetTag = "Inválido"
@@ -230,8 +230,6 @@ func forLinux(f *os.File) {
 	lin.Name = Linux.Infos[3]
 	lin.SnipeitHd9 = Linux.Infos[5]
 	lin.SnipeitMema3Ria7 = Linux.Infos[1]
-
-	//Passando Regex antes de popular informação de Asset Tag
 	lin.AssetTag = Linux.Infos[4]
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if lin.AssetTag == "" {

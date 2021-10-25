@@ -15,6 +15,7 @@ type PowerShell struct {
 }
 
 var Infos = []string{}
+var ProgramasWin = []string{}
 
 func MainProgram() {
 	posh := New()
@@ -105,6 +106,13 @@ func MainProgram() {
 	RoundedMemoriaWin := strconv.FormatFloat(math.Round(FloatMemoriaWin), 'f', -1, 64)
 	//Guardando o valor final no array String Infos
 	Infos = append(Infos, RoundedMemoriaWin)
+
+	programasInstalados, _, err := posh.Execute("Get-WmiObject -Class Win32_Product | Select-Object -Property Name")
+	if err != nil {
+		fmt.Println(err)
+	}
+	RegexsProgramasWin := regexs.RegexProgramasWin
+	ProgramasWin = RegexsProgramasWin.FindAllString(programasInstalados, -1)
 
 }
 

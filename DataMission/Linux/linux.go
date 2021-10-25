@@ -126,13 +126,21 @@ func MainProgram() {
 }
 
 func Crontab() {
+
+	//Cria um booleano para verificação da existência do Crontab
 	var Boolean bool = true
+	//Cria variável Home para armazenar o endereço do home do usuário
 	var home string
+
+	//Recebe o home do usuário
 	home, err := os.UserHomeDir()
+
+	//Caso haja algum erro nessa recepção
 	if err != nil {
 		log.Fatalln("Error getting home user directory: ", err)
 	}
 
+	//Verifica se o arquivo .CrontabExists existe
 	_, err = os.Stat(home + "/" + globals.CRONTABEXISTS_FILENAME)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -140,42 +148,68 @@ func Crontab() {
 		}
 	}
 
+	//Caso ele não exista (false), então ele cai na condição
 	if !Boolean {
 
+		//Recebe o nome do usuário
 		user := os.Getenv("USERNAME")
+
+		//Comando mv
 		Movecmd := "mv " + globals.LINUX_EXECNAME + " " + home
+
+		//Executa o comando bash movendo o executavel para o home do usuário.
 		cmd := exec.Command("bash", "-c", Movecmd)
 		err = cmd.Run()
 
+		//Caso haja algum erro nessa executação
 		if err != nil {
 			log.Fatalln("Error moving exec file: ", err, Movecmd, "'Are you trying to test the go file or running the bin file?'")
 		}
 
+		//Recebe o caminho para a criação de um novo arquivo
 		filename := home + "/." + globals.APPNAME + "-crontab.txt"
+
+		//comando touch (1) --> Dinamize-Inventory-crontab.txt (script do Crontab)
 		filecmd := "touch " + filename
+
+		//Executa o comando bash criando arquivo de Crontab
 		cmd = exec.Command("bash", "-c", filecmd)
 		err = cmd.Run()
 
+		//Caso haja algum erro nessa executação
 		if err != nil {
 			log.Fatalln("Error creating crontrab file: ", err)
 		}
+
+		//Comando echo
 		contentcmd := "echo " + globals.CRONTAB_CONTENT +
 			" > " + filename
+
+		//Executa o comando bash escrevendo no arquivo criado anteriormente
 		cmd = exec.Command("bash", "-c", contentcmd)
 		err = cmd.Run()
 
+		//Caso haja algum erro nessa executação
 		if err != nil {
 			log.Fatalln("Error writing on crontab file: ", err)
 		}
+
+		//Comando crontab
 		CrontabInitcmd := "crontab " + "-u " + user + " " + filename
+
+		//Executa o comando bash criando uma rotina de executação crontab
 		cmd = exec.Command("bash", "-c", CrontabInitcmd)
 		err = cmd.Run()
 
+		//Caso haja algum erro nessa executação
 		if err != nil {
 			log.Fatalln("Error initalizing crontab: ", err)
 		}
 
+		//Comando touch (2) --> .CrontabExists.txt (Arquivo que dita a existência do Crontab)
 		CrontabExistsFilecmd := "touch " + home + "/" + globals.CRONTABEXISTS_FILENAME
+
+		//Executa o comando bash
 		cmd = exec.Command("bash", "-c", CrontabExistsFilecmd)
 		err = cmd.Run()
 		if err != nil {
