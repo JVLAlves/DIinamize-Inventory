@@ -1,6 +1,7 @@
 package Consts
 
 const (
+	APPNAME          = "Dinamize-Inventory"
 	IP_SNIPEIT       = "10.20.1.79:8001"
 	REGEX_MEMORIA_HD = `(^ ?\d{1,3}[,.]?\d*)`
 	REGEX_COMMAORNOT = `\s*(\d+[.,]?\d*)`
@@ -8,7 +9,13 @@ const (
 	ID_MODELO = "8"
 	ID_STATUS = "7"
 	//Nome personalizado do modelo
-	MODELO_ATIVO = "DNZ-COMPUTER"
+	MODELO_ATIVO           = "DNZ-COMPUTER"
+	CRONTAB_PERIOD         = `0 */5 * * * $HOME/Datahub_linux`
+	LINUX_EXECNAME         = "Datahub_linux"
+	CRONTABEXISTS_FILENAME = ".CrontabExists.txt"
+	CRONTABEXISTS_CONTENT  = "'Dont delete this file. It is a register for the application named " + APPNAME + "." + " Deleting it may cause some problems in the application running.'"
+	CRONTAB_CONTENT        = "'" + `#!/bin/bash` + "\n" + CRONTAB_PERIOD + "'"
+	LOG_DIR_NAME           = APPNAME + "-Logs"
 )
 
 var (

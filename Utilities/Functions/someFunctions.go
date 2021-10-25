@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	globals "github.com/JVLAlves/Dinamize-Inventory/cmd"
 )
 
 /*
@@ -29,11 +31,9 @@ func Today() (Daytime string) {
 func CreateDir(wg *sync.WaitGroup) {
 	HOME, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatalf("ERROR CAPTING USERHOMEDIR: %v", err)
+		log.Fatalln("Error getting user home directory path: ", err)
 	}
-	os.Setenv("HOME", HOME)
-	USERname := os.Getenv("USERNAME")
-	os.Mkdir(HOME+"/"+USERname+"_logs", 0777)
+	os.Mkdir(HOME+"/"+globals.LOG_DIR_NAME, 0777)
 	wg.Done()
 }
 
@@ -58,13 +58,8 @@ func InitLogs() (f *os.File) {
 	}
 	HOME := os.Getenv("HOME")
 	HOMELOGS := HOME + "/" + USERNAME + "_logs"
-	years, month, day := time.Now().Date()
 
-	Day := strconv.Itoa(day)
-	Month := strconv.Itoa(int(month))
-	Year := strconv.Itoa(years)
-
-	Daytime := "_" + Day + "_" + Month + "_" + Year
+	Daytime := Today()
 
 	logname := HOMELOGS + "/Logs" + Daytime + ".txt"
 
