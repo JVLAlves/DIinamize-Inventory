@@ -9,7 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/JVLAlves/Dinamize-Inventory/regexs"
+	globals "github.com/JVLAlves/Dinamize-Inventory/cmd"
+	regexs "github.com/JVLAlves/Dinamize-Inventory/rgx"
 )
 
 //Variáveis de armazenamento dos dados da máquina
@@ -121,5 +122,75 @@ func MainProgram() {
 	HD = strconv.Itoa(int(HDRounded)) + "GB"
 	// adicionando informação encontrada no arquivo "tamanhoDoDisco.txt" a variável
 	Infos = append(Infos, HD)
+
+}
+
+func Crontab() {
+	var Boolean bool = true
+	var home string
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalln("Error getting home user directory: ", err)
+	}
+
+	_, err = os.Stat(home + "/" + globals.CRONTABEXISTS_FILENAME)
+	if err != nil {
+		if os.IsNotExist(err) {
+			Boolean = false
+		}
+	}
+
+	if !Boolean {
+
+		user := os.Getenv("USERNAME")
+		Movecmd := "mv " + globals.LINUX_EXECNAME + " " + home
+		cmd := exec.Command("bash", "-c", Movecmd)
+		err = cmd.Run()
+
+		if err != nil {
+			log.Fatalln("Error moving exec file: ", err, Movecmd, "'Are you trying to test the go file or running the bin file?'")
+		}
+
+		filename := home + "/." + globals.APPNAME + "-crontab.txt"
+		filecmd := "touch " + filename
+		cmd = exec.Command("bash", "-c", filecmd)
+		err = cmd.Run()
+
+		if err != nil {
+			log.Fatalln("Error creating crontrab file: ", err)
+		}
+		contentcmd := "echo " + globals.CRONTAB_CONTENT +
+			" > " + filename
+		cmd = exec.Command("bash", "-c", contentcmd)
+		err = cmd.Run()
+
+		if err != nil {
+			log.Fatalln("Error writing on crontab file: ", err)
+		}
+		CrontabInitcmd := "crontab " + "-u " + user + " " + filename
+		cmd = exec.Command("bash", "-c", CrontabInitcmd)
+		err = cmd.Run()
+
+		if err != nil {
+			log.Fatalln("Error initalizing crontab: ", err)
+		}
+
+		CrontabExistsFilecmd := "touch " + home + "/" + globals.CRONTABEXISTS_FILENAME
+		cmd = exec.Command("bash", "-c", CrontabExistsFilecmd)
+		err = cmd.Run()
+		if err != nil {
+			log.Fatalln("Error creating CrontabExists file: ", err)
+		}
+		CrontabExistsContentcmd := "echo " + globals.CRONTABEXISTS_CONTENT + " > " + home + "/" + globals.CRONTABEXISTS_FILENAME
+		cmd = exec.Command("bash", "-c", CrontabExistsContentcmd)
+		err = cmd.Run()
+		if err != nil {
+			log.Fatalln("Error writing CrontabExists file: ", err)
+		}
+		log.Println("Crontab Created")
+		log.Printf("Crontab Content\n%v\n", globals.CRONTAB_CONTENT)
+	} else {
+		return
+	}
 
 }

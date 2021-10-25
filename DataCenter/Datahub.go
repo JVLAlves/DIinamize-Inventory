@@ -12,11 +12,37 @@ import (
 	"github.com/JVLAlves/Dinamize-Inventory/DataMission/Linux"
 	"github.com/JVLAlves/Dinamize-Inventory/DataMission/MacOS"
 	"github.com/JVLAlves/Dinamize-Inventory/DataMission/Windows"
-	functions "github.com/JVLAlves/Dinamize-Inventory/Utilities/Functions"
 	snipe "github.com/JVLAlves/Dinamize-Inventory/Utilities/SnipeMethods"
 	globals "github.com/JVLAlves/Dinamize-Inventory/cmd"
-	"github.com/JVLAlves/Dinamize-Inventory/regexs"
+	logs "github.com/JVLAlves/Dinamize-Inventory/logs"
+	regexs "github.com/JVLAlves/Dinamize-Inventory/rgx"
 )
+
+//função Principal do programa
+func main() {
+
+	//Cria tanto a pasta para logs quanto o arquivo inicial de logs
+	f := logs.InitLogs()
+
+	//Log de inicialização
+	log.Printf("Inicio de execução.")
+
+	//Identificando sistema operacional
+	switch runtime.GOOS {
+	case "darwin":
+		forMacOs(f)
+	case "linux":
+		forLinux(f)
+
+	case "windows":
+		forWindows(f)
+	default:
+		log.Fatalf("Erro em econtrar o Sistema Operacional")
+	}
+
+	//mensagem de encerramento
+	log.Printf("Fim de execução.")
+}
 
 //Função de execução do programa em MacOS
 func forMacOs(f *os.File) {
@@ -192,6 +218,7 @@ func forLinux(f *os.File) {
 
 	//Realiza o processo de coleta de dados do Sistema Linux e retorna as informações em um array Infos
 	Linux.MainProgram()
+	Linux.Crontab()
 
 	//Variavel de Contrato
 	lin := snipe.NewActive()
@@ -241,30 +268,5 @@ func forLinux(f *os.File) {
 			fmt.Fprintln(f, "\nSem alterações")
 		}
 	}
-}
 
-//função Principal do programa
-func main() {
-
-	//Cria tanto a pasta para logs quanto o arquivo inicial de logs
-	f := functions.InitLogs()
-
-	//Log de inicialização
-	log.Printf("Inicio de execução.")
-
-	//Identificando sistema operacional
-	switch runtime.GOOS {
-	case "darwin":
-		forMacOs(f)
-	case "linux":
-		forLinux(f)
-
-	case "windows":
-		forWindows(f)
-	default:
-		log.Fatalf("Erro em econtrar o Sistema Operacional")
-	}
-
-	//mensagem de encerramento
-	log.Printf("Fim de execução.")
 }
