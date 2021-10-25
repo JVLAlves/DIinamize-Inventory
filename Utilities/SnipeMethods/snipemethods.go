@@ -16,16 +16,17 @@ import (
 
 //Modelo para coleta e envio de dados do computador.
 type CollectionT struct {
-	ModelID           string `json:"model_id"`
-	StatusID          string `json:"status_id"`
-	AssetTag          string `json:"asset_tag"`
-	Name              string `json:"name"`
-	SnipeitSo8        string `json:"_snipeit_so_8"`
-	SnipeitModel12    string `json:"_snipeit_modelo_12"`
-	SnipeitHostname10 string `json:"_snipeit_hostname_10"`
-	SnipeitHd9        string `json:"_snipeit_hd_9"`
-	SnipeitCPU11      string `json:"_snipeit_cpu_11"`
-	SnipeitMema3Ria7  string `json:"_snipeit_mema3ria_7"`
+	ModelID                      string   `json:"model_id"`
+	StatusID                     string   `json:"status_id"`
+	AssetTag                     string   `json:"asset_tag"`
+	Name                         string   `json:"name"`
+	SnipeitSo8                   string   `json:"_snipeit_so_8"`
+	SnipeitModel12               string   `json:"_snipeit_modelo_12"`
+	SnipeitHostname10            string   `json:"_snipeit_hostname_10"`
+	SnipeitHd9                   string   `json:"_snipeit_hd_9"`
+	SnipeitCPU11                 string   `json:"_snipeit_cpu_11"`
+	SnipeitMema3Ria7             string   `json:"_snipeit_mema3ria_7"`
+	SnipeitProgramasInstalados15 []string `json:"_snipeit_programas_instalados_15"`
 }
 
 //Modelo geral de RESPONSE
@@ -217,6 +218,11 @@ type UniversalGetT struct {
 			Value       string `json:"value"`
 			FieldFormat string `json:"field_format"`
 		} `json:"Setor"`
+		ProgramasInstalados struct {
+			Field       string   `json:"field"`
+			Value       []string `json:"value"`
+			FieldFormat string   `json:"field_format"`
+		} `json:"Programas Instalados"`
 	} `json:"custom_fields"`
 	AvailableActions struct {
 		Checkout bool `json:"checkout"`
@@ -339,9 +345,66 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	ExistentActive.SnipeitHostname10 = responsevar.CustomFields.Hostname.Value
 	ExistentActive.SnipeitCPU11 = responsevar.CustomFields.CPU.Value
 	ExistentActive.SnipeitModel12 = responsevar.CustomFields.Modelo.Value
+	ExistentActive.SnipeitProgramasInstalados15 = responsevar.CustomFields.ProgramasInstalados.Value
 
 	return &ExistentActive
 
+}
+
+func (Active *CollectionT) ComparePrograms(f io.Writer, ExistentActive *CollectionT) (PatchrequestSlice string) {
+
+	var IsDifferent bool = false
+	var ExistentActivePrograms = ExistentActive.SnipeitProgramasInstalados15
+	var ActivePrograms = Active.SnipeitProgramasInstalados15
+
+	tbl := table.New("STATUS", "PROGRAMA")
+
+	//Implementação da formatação
+	tbl.WithWriter(f)
+
+	for in, v := range ActivePrograms {
+
+		if v != ExistentActivePrograms[in] {
+			IsDifferent = true
+			break
+		}
+	}
+
+	if IsDifferent {
+
+		var PatchrequestSlice string = ", \"_snipeit_programas_instalados_15\":\""
+
+		fmt.Fprintln(f, "Programa(s) desconhecido(s) encontrado(s). Refazendo lista de programas instalados.")
+
+		for in, v := range ActivePrograms {
+
+			PatchrequestSlice += v + ` | `
+
+			if v == ExistentActivePrograms[in] {
+
+				tbl.AddRow("Novo!", v)
+
+			}
+
+			tbl.AddRow("Existente", v)
+		}
+
+		PatchrequestSlice += "\""
+
+		return PatchrequestSlice
+
+	} else {
+
+		fmt.Fprintln(f, "Não há novos programas instalados.")
+
+		for _, v := range ActivePrograms {
+
+			tbl.AddRow("Existente", v)
+
+		}
+
+		return
+	}
 }
 
 func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Patchrequest string, Needpatching bool) {
@@ -435,8 +498,9 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 			}
 		}
 
+		ProgramsRequest := Active.ComparePrograms(f, ExistentActive)
 		//Fechamento do Patchresquest
-		Patchresquest += "}"
+		Patchresquest += ProgramsRequest + "}"
 		fmt.Printf("\nAlterações pendentes:\n%v\n", Pending)
 		//Caso haja alterações,printe a tabela retorna true
 		tbl.Print()
@@ -645,9 +709,10 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	//Cria tabela com os Cabeçalhos "Fieldname" e "Ativo Existente"
 	tbl := table.New("Fieldname", "Novo Ativo")
-
+	tblProgs := table.New("Programas Instalados")
 	//Implementação da formatação
 	tbl.WithWriter(f)
+	tblProgs.WithWriter(f)
 
 	for i := 0; i < len(ActiveIndex); i++ {
 
@@ -689,8 +754,15 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	}
 
+	for _, v := range Active.SnipeitProgramasInstalados15 {
+
+		tblProgs.AddRow(v)
+
+	}
+
 	//Expõe tabela do Ativo Existente
 	tbl.Print()
+	tblProgs.Print()
 	//Printando o Response
 	fmt.Println("Response do POST:", response)
 }
