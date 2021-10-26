@@ -6,6 +6,7 @@ import (
 	"math"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	regexs "github.com/JVLAlves/Dinamize-Inventory/rgx"
 )
@@ -15,7 +16,7 @@ type PowerShell struct {
 }
 
 var Infos = []string{}
-var ProgramasWin = []string{}
+var ProgramasWin string
 
 func MainProgram() {
 	posh := New()
@@ -112,7 +113,8 @@ func MainProgram() {
 		fmt.Println(err)
 	}
 	RegexsProgramasWin := regexs.RegexProgramasWin
-	ProgramasWin = RegexsProgramasWin.FindAllString(programasInstalados, -1)
+	ProgramasWinArray := RegexsProgramasWin.FindAllString(programasInstalados, -1)
+	ProgramasWin = strings.Join(ProgramasWinArray, " | ")
 
 }
 

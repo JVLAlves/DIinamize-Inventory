@@ -90,7 +90,7 @@ func MainProgram() {
 	Infos = append(Infos, SO)
 
 	//Executa o comando Script para escrever a sessão do terminal em arquivo txt (Hostname)
-	Hostcmd := exec.Command("bash", "-c", "hostname", "hostname.txt")
+	Hostcmd := exec.Command("bash", "-c", "hostname")
 	HostcmdByt, _ := Hostcmd.Output()
 	HostcmdBody := string(HostcmdByt)
 	Host := strings.TrimSpace(HostcmdBody)
@@ -100,7 +100,7 @@ func MainProgram() {
 	Infos = append(Infos, Assettag)
 
 	//Executa o comando Script para escrever a sessão do terminal em arquivo txt (Tamanho do Disco)
-	cmd := exec.Command("bash", "-c", "lsblk |grep disk |awk '{print $4}'", "tamanhoDoDisco.txt")
+	cmd := exec.Command("bash", "-c", "lsblk |grep disk |awk '{print $4}'")
 	HDcmdByt, err := cmd.Output()
 
 	if err != nil {
