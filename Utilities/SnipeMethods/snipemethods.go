@@ -700,10 +700,11 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	}
 
 	// Unmarshal do resultado do response
-	response := SnipeitResponseT{}
-	err = json.Unmarshal(body, &response)
+	Response := NewSnipeitGetResponse()
+	err = json.Unmarshal(body, &Response)
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
+		fmt.Println("Response irregular?", string(body))
 		return
 	}
 
@@ -764,7 +765,7 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	tbl.Print()
 	tblProgs.Print()
 	//Printando o Response
-	fmt.Println("Response do POST:", response)
+	fmt.Println("Response do POST:", Response)
 }
 
 func NewActive() *CollectionT {

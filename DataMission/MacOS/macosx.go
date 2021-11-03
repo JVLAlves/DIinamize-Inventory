@@ -1,111 +1,81 @@
 package MacOS
 
 import (
-	"bufio"
-	"io"
 	"log"
-	"os"
 	"os/exec"
-	"sync"
-)
+	"strings"
 
-//Lista para leitura linha a linha
-var Linhas []string
+	regexs "github.com/JVLAlves/Dinamize-Inventory/rgx"
+)
 
 //Lista para Informações armazenadas
 var Infos []string
 
-//Cria arquivos com as informações retiradas do computador via Terminal
-func Create(wg *sync.WaitGroup, command string, args string) {
+func MainProgram() {
 
-	outFile, err := os.OpenFile(command+".out", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
+	//Hostname
+	HostnameCmd := `uname -n`
+	cmd := exec.Command("bash", "-c", HostnameCmd)
+
+	HostnameCmdByt, err := cmd.Output()
+
 	if err != nil {
-		log.Println("error creating file", err)
+		log.Printf("Erro na execução comando de hostname: %v\n", err)
 	}
-	defer outFile.Close()
-	cmd := exec.Command("bash", "-c", command+" "+args)
 
-	out, err := cmd.StdoutPipe()
+	HostnameCmdBody := string(HostnameCmdByt)
+	Host := strings.TrimSpace(HostnameCmdBody)
+	AssetTag := regexs.RegexAssettagDigit.FindString(HostnameCmdBody)
+	Infos = append(Infos, Host)
+	Infos = append(Infos, AssetTag)
+
+	//CPU
+	CPUcmd := `sysctl -a |grep machdep.cpu.brand_string|awk '{print $2, $3, $4}'`
+	cmd = exec.Command("bash", "-c", CPUcmd)
+	CPUcmdByt, err := cmd.Output()
+
+	CPUcmdBody := string(CPUcmdByt)
+	CPU := strings.TrimSpace(CPUcmdBody)
 	if err != nil {
-		log.Println("error attaching command stdout", err)
+		log.Printf("Erro na execução comando de CPU: %v\n", err)
 	}
-	go io.Copy(outFile, out)
 
-	err = cmd.Run()
+	Infos = append(Infos, CPU)
+
+	//RAM Memory
+	Memorycmd := `hostinfo |grep memory |awk '{print $4, $5}'`
+	cmd = exec.Command("bash", "-c", Memorycmd)
+	MemorycmdByt, err := cmd.Output()
 	if err != nil {
-		panic(err)
+		log.Printf("Erro na execução comando de memory: %v\n", err)
 	}
-	wg.Done()
-}
+	MemorycmdBody := string(MemorycmdByt)
+	Memory := regexs.RegexHDandMemory.FindString(MemorycmdBody)
+	Infos = append(Infos, Memory)
 
-//Lê os arquivos criados pela função Create
-func Running() {
+	//HD
+	HDcmd := `diskutil list|grep disk0s2 | awk '{print $5, $6}'`
 
-	file, err := os.Open("uname.out")
+	cmd = exec.Command("bash", "-c", HDcmd)
+	HDcmdByt, err := cmd.Output()
 	if err != nil {
-		log.Print(err)
+		log.Printf("Erro na execução comando de HD: %v\n", err)
 	}
-	fileScanner := bufio.NewScanner(file)
-	Linhas = []string{}
+	HDcmdBody := string(HDcmdByt)
+	HD := regexs.RegexHDandMemory.FindString(HDcmdBody)
+	Infos = append(Infos, HD)
 
-	for fileScanner.Scan() {
-		Linhas = append(Linhas, fileScanner.Text())
-		if fileScanner.Err() != nil {
-			log.Fatalf("Erro SCAN: %v", fileScanner.Err().Error())
-		}
-	}
-	Infos = append(Infos, Linhas[0])
-	file.Close()
-
-	file, err = os.Open("sysctl.out")
+	//S.O.
+	SOcmd := `sw_vers -productVersion`
+	cmd = exec.Command("bash", "-c", SOcmd)
+	SOcmdByt, err := cmd.Output()
 	if err != nil {
-		log.Print(err)
+		log.Printf("Erro na execução comando de HD: %v\n", err)
 	}
-	fileScanner = bufio.NewScanner(file)
-	Linhas = []string{}
-	for fileScanner.Scan() {
-		Linhas = append(Linhas, fileScanner.Text())
-	}
-	Infos = append(Infos, Linhas[0])
-	file.Close()
+	SOcmdBody := string(SOcmdByt)
 
-	file, err = os.Open("hostinfo.out")
-	if err != nil {
-		log.Print(err)
-	}
-	fileScanner = bufio.NewScanner(file)
-	Linhas = []string{}
-	for fileScanner.Scan() {
-		Linhas = append(Linhas, fileScanner.Text())
-	}
-	Infos = append(Infos, Linhas[0])
-	file.Close()
+	SO := regexs.RegexMacOS.FindString(SOcmdBody)
 
-	file, err = os.Open("diskutil.out")
-	if err != nil {
-		log.Print(err)
-	}
-	fileScanner = bufio.NewScanner(file)
-	Linhas = []string{}
-	for fileScanner.Scan() {
-		Linhas = append(Linhas, fileScanner.Text())
-	}
-	Infos = append(Infos, Linhas[0])
-	file.Close()
+	Infos = append(Infos, SO)
 
-	file, err = os.Open("sw_vers.out")
-	if err != nil {
-		log.Print(err)
-	}
-	fileScanner = bufio.NewScanner(file)
-	Linhas = []string{}
-	for fileScanner.Scan() {
-		Linhas = append(Linhas, fileScanner.Text())
-	}
-	Infos = append(Infos, Linhas[0])
-	file.Close()
-
-	//Apagando Junk Files
-	cmd := exec.Command("rm", "uname.out", "sysctl.out", "hostinfo.out", "diskutil.out", "sw_vers.out")
-	_, _ = cmd.Output()
 }
