@@ -56,8 +56,9 @@ func forMacOs(f *os.File) {
 	mac.SnipeitCPU11 = MacOS.Infos[2]
 
 	mac.SnipeitHostname10 = MacOS.Infos[0]
-
+	mac.SnipeitProgramasInstalados15 = MacOS.Infos[6]
 	mac.Name = MacOS.Infos[0]
+	mac.SnipeitOffice14 = OfficeExists(mac)
 
 	//Passando Regex antes de popular informação de Memória
 
@@ -116,7 +117,7 @@ func forMacOs(f *os.File) {
 	mac.SnipeitModel12 = globals.MODELO_ATIVO
 
 	VerifyIfnotEmpty(mac)
-
+	DevExposeAll(mac)
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
 	if snipe.Verifybytag(mac.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
@@ -266,8 +267,8 @@ func forLinux(f *os.File) {
 }
 
 func VerifyIfnotEmpty(Active *snipe.CollectionT) {
-	ProgramasInstalados := strings.Join(Active.SnipeitProgramasInstalados15, " | ")
-	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12, ProgramasInstalados}
+	ProgramasInstalados := Active.SnipeitProgramasInstalados15
+	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12, Active.SnipeitOffice14, ProgramasInstalados}
 	var EmptyField string
 	var EmptyCounter int
 	var EmptyList []string
@@ -323,4 +324,43 @@ func VerifyIfnotEmpty(Active *snipe.CollectionT) {
 		log.Fatalf("There are %v Empty fields, the program can't continue.\tThe Empty fields are %v\n", EmptyCounter, EmptyList)
 	}
 
+}
+
+func OfficeExists(Active *snipe.CollectionT) string {
+
+	ProgramasInstalados := strings.Split(Active.SnipeitProgramasInstalados15, " | ")
+	OfficeCounter := 0
+	for _, v := range ProgramasInstalados {
+
+		if OfficeCounter >= 2 {
+			return "Sim"
+
+		}
+		for _, comp := range globals.Office {
+
+			if comp == v {
+				OfficeCounter++
+			}
+		}
+	}
+	return "Não"
+
+}
+
+func DevExposeAll(Active *snipe.CollectionT) {
+	ProgramasInstalados := strings.Split(Active.SnipeitProgramasInstalados15, " | ")
+	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12, Active.SnipeitOffice14}
+
+	fmt.Println("HardWare Data")
+	for _, v := range ActiveIndexTotal {
+
+		fmt.Println(v)
+	}
+	fmt.Println()
+	fmt.Println("Programas Instalados")
+	for _, v := range ProgramasInstalados {
+
+		fmt.Println(v)
+	}
+	log.Fatalln("Safe End")
 }
