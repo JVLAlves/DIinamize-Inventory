@@ -12,8 +12,8 @@ var (
 	RegexCPU           = regexp.MustCompile(`([[:upper:]]+[a-z]+\(.\)[[:alpha:]]*[()]*.*[^\s])`)
 	RegexHDWin         = regexp.MustCompile(`\d+[^\s]`)
 	RegexSOWin         = regexp.MustCompile(`([[:alpha:]]*\s?Windows\s.*[^\s])`)
-	//comentário
-	RegexMemoriaWin   = regexp.MustCompile(`Memória física total:\s+(\d+[.,]\d+)\s(\w+[^\s])`)
-	RegexProgramasWin = regexp.MustCompile(`[^\s][A-z]+\s[[:graph:]]+\s?[[:alnum:]]*.*[^\s]`)
-	RegexHd = regexp.MustCompile(`\d+.\d+`)
+	RegexMemoriaWin    = regexp.MustCompile(`Memória física total:\s+(\d+[.,]\d+)\s(\w+[^\s])`)
+	RegexProgramasWin  = regexp.MustCompile(`[^\s][A-z]+\s[[:graph:]]+\s?[[:alnum:]]*.*[^\s]`)
+	RegexHd            = regexp.MustCompile(`\d+.\d+`)
+	RegexMacApps       = regexp.MustCompile(`(.*)\.app`)
 )

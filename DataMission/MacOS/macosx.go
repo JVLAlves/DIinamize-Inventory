@@ -1,6 +1,7 @@
 package MacOS
 
 import (
+	"io/ioutil"
 	"log"
 	"os/exec"
 	"strings"
@@ -78,4 +79,29 @@ func MainProgram() {
 
 	Infos = append(Infos, SO)
 
+	ApplicationDirPath := `/applications`
+
+	Apps, _ := ioutil.ReadDir(ApplicationDirPath)
+	Applist := []string{}
+
+	for _, app := range Apps {
+		Applist = append(Applist, app.Name())
+	}
+
+	SecondAppList := []string{}
+	for _, a := range Applist {
+
+		App := strings.TrimSpace(a)
+		AppRegexed := regexs.RegexMacApps.FindStringSubmatch(App)
+
+		if len(AppRegexed) != 0 {
+
+			SecondAppList = append(SecondAppList, AppRegexed[1])
+		} else {
+			SecondAppList = append(SecondAppList, App)
+		}
+	}
+
+	ProgramasInstalados := strings.Join(SecondAppList, ` | `)
+	Infos = append(Infos, ProgramasInstalados)
 }

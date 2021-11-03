@@ -32,4 +32,5 @@ var (
 		"10.15": "MacOs Catalina",
 		"11.4":  "MacOs Big Sur",
 	}
+	Office = []string{"Microsoft OneNote", "Microsoft Word", "Microsoft PowerPoint", "Microsoft Excel", "Microsoft Outlook", "Microsoft Onedrive", "Microsoft Publisher", "Microsoft Access"}
 )

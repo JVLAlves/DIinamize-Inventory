@@ -27,6 +27,7 @@ type CollectionT struct {
 	SnipeitCPU11                 string `json:"_snipeit_cpu_11"`
 	SnipeitMema3Ria7             string `json:"_snipeit_mema3ria_7"`
 	SnipeitProgramasInstalados15 string `json:"_snipeit_programas_instalados_15"`
+	SnipeitOffice14              string `json:"_snipeit_office_14"`
 }
 
 //Modelo geral de RESPONSE
@@ -699,11 +700,10 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	}
 
 	// Unmarshal do resultado do response
-	Response := NewSnipeitGetResponse()
-	err = json.Unmarshal(body, &Response)
+	response := SnipeitResponseT{}
+	err = json.Unmarshal(body, &response)
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
-		fmt.Println("Response irregular?", string(body))
 		return
 	}
 
@@ -764,7 +764,7 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	tbl.Print()
 	tblProgs.Print()
 	//Printando o Response
-	fmt.Println("Response do POST:", Response)
+	fmt.Println("Response do POST:", response)
 }
 
 func NewActive() *CollectionT {
