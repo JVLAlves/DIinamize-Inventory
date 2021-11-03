@@ -7,7 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"sync"
+	"strings"
 
 	"github.com/JVLAlves/Dinamize-Inventory/DataMission/Linux"
 	"github.com/JVLAlves/Dinamize-Inventory/DataMission/MacOS"
@@ -37,7 +37,7 @@ func main() {
 	case "windows":
 		forWindows(f)
 	default:
-		log.Fatalf("Erro em econtrar o Sistema Operacional")
+		log.Fatalf("Erro em encontrar o Sistema Operacional")
 	}
 
 	//mensagem de encerramento
@@ -47,59 +47,44 @@ func main() {
 //Função de execução do programa em MacOS
 func forMacOs(f *os.File) {
 
-	//Criando Arquivos via Goroutines
-	wg := &sync.WaitGroup{}
-	wg.Add(5)
-	go MacOS.Create(wg, "uname", "-n")
-	go MacOS.Create(wg, "sysctl", "-a |grep machdep.cpu.brand_string |awk '{print $2,$3,$4}'")
-	go MacOS.Create(wg, "hostinfo", "|grep memory |awk '{print $4,$5}'")
-	go MacOS.Create(wg, "diskutil", "list |grep disk0s2 | awk '{print $5,$6}'")
-	go MacOS.Create(wg, "sw_vers", "-productVersion")
-	wg.Wait()
-
-	//Realiza o processo de coleta de dados do Sistema MacOS e retorna as informações em um array Infos
-	MacOS.Running()
+	MacOS.MainProgram()
 
 	//Variavel de Contrato
 	mac := snipe.NewActive()
 
 	//Populando Struct //tALVEZ PODE SER FEITA MELHOR, NÃO SEI.
-	mac.SnipeitCPU11 = MacOS.Infos[1]
+	mac.SnipeitCPU11 = MacOS.Infos[2]
+
 	mac.SnipeitHostname10 = MacOS.Infos[0]
+
 	mac.Name = MacOS.Infos[0]
 
 	//Passando Regex antes de popular informação de Memória
 
-	MemoryRegex := regexs.RegexHDandMemory.FindStringSubmatch(MacOS.Infos[2])
-	//Convertendo response de string para float
-	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
+	MemoryFloat, _ := strconv.ParseFloat(MacOS.Infos[3], 64)
 	//Arredondando valor númerico da variável
 	MemoryRounded := math.Round(MemoryFloat)
 	//Populando campo de memória com o valor tratado
 	mac.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
 
-	//Passando Regex antes de popular informação de HD
-	HDRegex := regexs.RegexHDandMemory.FindStringSubmatch(MacOS.Infos[3])
 	//Convertendo response de string para float
-	HDFloat, _ := strconv.ParseFloat(HDRegex[1], 64)
+	HDFloat, _ := strconv.ParseFloat(MacOS.Infos[4], 64)
 	//Arredondando valor númerico da variável
 	HDRounded := math.Round(HDFloat)
 	//Populando campo de HD com o valor tratado
 	mac.SnipeitHd9 = strconv.Itoa(int(HDRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de Asset Tag
-	mac.AssetTag = regexs.RegexAssettagDigit.FindString(MacOS.Infos[0])
+	mac.AssetTag = regexs.RegexAssettagDigit.FindString(MacOS.Infos[1])
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if mac.AssetTag == "" {
-		mac.AssetTag = "No Asset Tag"
+		mac.AssetTag = "Inválido"
 		fmt.Fprintf(f, "Nenhum Asset Tag foi definido, pois nenhuma sequência numérica foi encontrada no HOSTNAME: %v", MacOS.Infos[0])
 
 	}
 
-	//Passando Regex antes de popular informação de Sistema Operacional
-	SORegex := regexs.RegexMacOS.FindStringSubmatch(MacOS.Infos[4])
 	//Convertendo response de string para float
-	SOFloat, err := strconv.ParseFloat(SORegex[1], 64)
+	SOFloat, err := strconv.ParseFloat(MacOS.Infos[5], 64)
 	//Tratando erro
 	if err != nil {
 		log.Fatalf("Erro na conversão do S.O. para float")
@@ -111,7 +96,7 @@ func forMacOs(f *os.File) {
 	if SOFloat >= 11.4 && SOFloat < 12.0 {
 		SOString = "11.4"
 	} else {
-		SOString = SORegex[1]
+		SOString = MacOS.Infos[5]
 	}
 
 	//Alternando Versão Númerica (RETIRADA DO SISTEMA) para Versão Nominal (DEFINIDA PELA APPLE INC.)
@@ -130,6 +115,8 @@ func forMacOs(f *os.File) {
 	mac.StatusID = globals.ID_STATUS
 	mac.SnipeitModel12 = globals.MODELO_ATIVO
 
+	VerifyIfnotEmpty(mac)
+
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
 	if snipe.Verifybytag(mac.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
@@ -139,7 +126,7 @@ func forMacOs(f *os.File) {
 	} else {
 		//caso já exista, o programa procura por disparidades.
 		//log.Println("Um Ativo semelhante foi encontrado no sistema.")
-		fmt.Print("Asset Tag idêntico encontrado. Iniciando análise de disparidades")
+		fmt.Fprintln(f, "Asset Tag idêntico encontrado. Iniciando análise de disparidades")
 		ExistentActive := snipe.Getbytag(globals.IP_SNIPEIT, mac.AssetTag)
 		PatchRequestUrl, IsNeeded := mac.Compare(f, ExistentActive)
 		if IsNeeded {
@@ -167,13 +154,20 @@ func forWindows(f *os.File) {
 
 	//Populando Struct
 	win.SnipeitCPU11 = Windows.Infos[2]
+
 	win.SnipeitMema3Ria7 = Windows.Infos[5] + "GB"
+
 	win.SnipeitSo8 = Windows.Infos[4]
+
 	win.SnipeitHostname10 = Windows.Infos[0]
+
 	win.Name = Windows.Infos[0]
 	win.SnipeitHd9 = Windows.Infos[3] + "GB"
+
 	win.AssetTag = Windows.Infos[1]
+
 	win.SnipeitProgramasInstalados15 = Windows.ProgramasWin
+
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
 		win.AssetTag = "Inválido"
@@ -186,6 +180,7 @@ func forWindows(f *os.File) {
 	win.StatusID = globals.ID_STATUS
 	win.SnipeitModel12 = globals.MODELO_ATIVO
 
+	VerifyIfnotEmpty(win)
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
 	if snipe.Verifybytag(win.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
@@ -243,6 +238,7 @@ func forLinux(f *os.File) {
 	lin.StatusID = globals.ID_STATUS
 	lin.SnipeitModel12 = globals.MODELO_ATIVO
 
+	VerifyIfnotEmpty(lin)
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
 	if snipe.Verifybytag(lin.AssetTag, globals.IP_SNIPEIT) {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
@@ -265,6 +261,66 @@ func forLinux(f *os.File) {
 			//Caso não haja disparidades... Nada acontece.
 			fmt.Fprintln(f, "\nSem alterações")
 		}
+	}
+
+}
+
+func VerifyIfnotEmpty(Active *snipe.CollectionT) {
+	ProgramasInstalados := strings.Join(Active.SnipeitProgramasInstalados15, " | ")
+	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12, ProgramasInstalados}
+	var EmptyField string
+	var EmptyCounter int
+	var EmptyList []string
+	for In, v := range ActiveIndexTotal {
+
+		if v == "" {
+
+			switch In {
+
+			case 0:
+				EmptyField = "Name"
+				EmptyList = append(EmptyList, EmptyField)
+			case 1:
+				EmptyField = "Asset Tag"
+				EmptyList = append(EmptyList, EmptyField)
+			case 2:
+				EmptyField = "Model ID"
+				EmptyList = append(EmptyList, EmptyField)
+			case 3:
+				EmptyField = "Status ID"
+				EmptyList = append(EmptyList, EmptyField)
+			case 4:
+				EmptyField = "Memória"
+				EmptyList = append(EmptyList, EmptyField)
+			case 5:
+				EmptyField = "SO"
+				EmptyList = append(EmptyList, EmptyField)
+			case 6:
+				EmptyField = "HD"
+				EmptyList = append(EmptyList, EmptyField)
+			case 7:
+				EmptyField = "Hostname"
+				EmptyList = append(EmptyList, EmptyField)
+			case 8:
+				EmptyField = "CPU"
+				EmptyList = append(EmptyList, EmptyField)
+			case 9:
+				EmptyField = "Model Name"
+				EmptyList = append(EmptyList, EmptyField)
+			case 10:
+				EmptyField = "Programas Instalados"
+				EmptyList = append(EmptyList, EmptyField)
+
+			}
+
+			EmptyCounter++
+		}
+
+	}
+
+	if EmptyCounter > 2 {
+
+		log.Fatalf("There are %v Empty fields, the program can't continue.\tThe Empty fields are %v\n", EmptyCounter, EmptyList)
 	}
 
 }
