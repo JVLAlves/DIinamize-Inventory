@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	globals "github.com/JVLAlves/Dinamize-Inventory/cmd"
+	globals "github.com/JVLAlves/Dinamize-Inventory/internal/app/globals"
 )
 
 func InitLogs() (stdoutFile *os.File) {
