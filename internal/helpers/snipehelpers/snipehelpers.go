@@ -11,23 +11,24 @@ import (
 	"strconv"
 	"strings"
 
+	globals "github.com/JVLAlves/Dinamize-Inventory/internal/app/globals"
 	"github.com/rodaine/table"
 )
 
 //Modelo para coleta e envio de dados do computador.
 type CollectionT struct {
-	ModelID                      string `json:"model_id"`
-	StatusID                     string `json:"status_id"`
-	AssetTag                     string `json:"asset_tag"`
-	Name                         string `json:"name"`
-	SnipeitSo8                   string `json:"_snipeit_so_8"`
-	SnipeitModel12               string `json:"_snipeit_modelo_12"`
-	SnipeitHostname10            string `json:"_snipeit_hostname_10"`
-	SnipeitHd9                   string `json:"_snipeit_hd_9"`
-	SnipeitCPU11                 string `json:"_snipeit_cpu_11"`
-	SnipeitMema3Ria7             string `json:"_snipeit_mema3ria_7"`
-	SnipeitProgramasInstalados15 string `json:"_snipeit_programas_instalados_15"`
-	SnipeitOffice14              string `json:"_snipeit_office_14"`
+	ModelID                    string `json:"model_id"`
+	StatusID                   string `json:"status_id"`
+	AssetTag                   string `json:"asset_tag"`
+	Name                       string `json:"name"`
+	SnipeitSo                  string `json:"_snipeit_so_3"`
+	SnipeitModel               string `json:"_snipeit_modelo_7"`
+	SnipeitHostname            string `json:"_snipeit_hostname_5"`
+	SnipeitHd                  string `json:"_snipeit_hd_4"`
+	SnipeitCPU                 string `json:"_snipeit_cpu_6"`
+	SnipeitMema3Ria            string `json:"_snipeit_mema3ria_2"`
+	SnipeitProgramasInstalados string `json:"_snipeit_programas_instalados_10"`
+	SnipeitOffice              string `json:"_snipeit_office_9"`
 }
 
 //Modelo geral de RESPONSE
@@ -254,7 +255,7 @@ func Getidbytag(assettag string, IP string) (ID int) {
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -301,7 +302,7 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -340,13 +341,13 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	ExistentActive.AssetTag = responsevar.AssetTag
 	ExistentActive.ModelID = strconv.Itoa(responsevar.Model.ID)
 	ExistentActive.StatusID = strconv.Itoa(responsevar.StatusLabel.ID)
-	ExistentActive.SnipeitMema3Ria7 = responsevar.CustomFields.MemRia.Value
-	ExistentActive.SnipeitSo8 = responsevar.CustomFields.SO.Value
-	ExistentActive.SnipeitHd9 = responsevar.CustomFields.Hd.Value
-	ExistentActive.SnipeitHostname10 = responsevar.CustomFields.Hostname.Value
-	ExistentActive.SnipeitCPU11 = responsevar.CustomFields.CPU.Value
-	ExistentActive.SnipeitModel12 = responsevar.CustomFields.Modelo.Value
-	ExistentActive.SnipeitProgramasInstalados15 = responsevar.CustomFields.ProgramasInstalados.Value
+	ExistentActive.SnipeitMema3Ria = responsevar.CustomFields.MemRia.Value
+	ExistentActive.SnipeitSo = responsevar.CustomFields.SO.Value
+	ExistentActive.SnipeitHd = responsevar.CustomFields.Hd.Value
+	ExistentActive.SnipeitHostname = responsevar.CustomFields.Hostname.Value
+	ExistentActive.SnipeitCPU = responsevar.CustomFields.CPU.Value
+	ExistentActive.SnipeitModel = responsevar.CustomFields.Modelo.Value
+	ExistentActive.SnipeitProgramasInstalados = responsevar.CustomFields.ProgramasInstalados.Value
 
 	return &ExistentActive
 
@@ -356,8 +357,8 @@ func (Active *CollectionT) ComparePrograms(f io.Writer, ExistentActive *Collecti
 
 	var IsDifferent bool = false
 
-	ExistentActivePrograms := strings.Split(ExistentActive.SnipeitProgramasInstalados15, " | ")
-	ActivePrograms := strings.Split(Active.SnipeitProgramasInstalados15, " | ")
+	ExistentActivePrograms := strings.Split(ExistentActive.SnipeitProgramasInstalados, " | ")
+	ActivePrograms := strings.Split(Active.SnipeitProgramasInstalados, " | ")
 
 	tbl := table.New("STATUS", "PROGRAMA")
 
@@ -411,10 +412,10 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 
 	var IsDifferent bool = false
 	//Variável Array com as informações do Struct de análise
-	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMema3Ria7, ExistentActive.SnipeitSo8, ExistentActive.SnipeitHd9, ExistentActive.SnipeitHostname10, ExistentActive.SnipeitCPU11, ExistentActive.SnipeitModel12}
+	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMema3Ria, ExistentActive.SnipeitSo, ExistentActive.SnipeitHd, ExistentActive.SnipeitHostname, ExistentActive.SnipeitCPU, ExistentActive.SnipeitModel}
 
 	//Variável Array com as informações do Struct do Ativo Criado
-	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
 
 	//Variavél Array que contém as alterações pendentes
 	var Pending []string
@@ -580,7 +581,7 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 	}
 
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
 
 	//HEADERs
 	req.Header.Add("Accept", "application/json")
@@ -613,7 +614,7 @@ func Verifybytag(assettag string, IP string) bool {
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
 
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
@@ -654,13 +655,13 @@ func Verifybytag(assettag string, IP string) bool {
 Envia os dados do computador para o inventário no Snipeit. (Essa função recebe a variavel que recebe o tipo struct criado com os dados do computador)*/
 func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
-	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
 
 	//URL da API SnipeIt
 	url := "http://" + IP + "/api/v1/hardware"
 
 	// Token de autentiucação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
 
 	//transformando em bytes a variável hw
 	hardwarePostJSON, err := json.Marshal(Active)
@@ -754,7 +755,7 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	}
 
-	for _, v := range Active.SnipeitProgramasInstalados15 {
+	for _, v := range Active.SnipeitProgramasInstalados {
 
 		tblProgs.AddRow(v)
 

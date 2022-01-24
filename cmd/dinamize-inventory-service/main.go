@@ -56,11 +56,11 @@ func forMacOs(f *os.File) {
 	mac := snipe.NewActive()
 
 	//Populando Struct
-	mac.SnipeitCPU11 = MacOS.Infos[2]
-	mac.SnipeitHostname10 = MacOS.Infos[0]
-	mac.SnipeitProgramasInstalados15 = MacOS.Infos[6]
+	mac.SnipeitCPU = MacOS.Infos[2]
+	mac.SnipeitHostname = MacOS.Infos[0]
+	mac.SnipeitProgramasInstalados = MacOS.Infos[6]
 	mac.Name = MacOS.Infos[0]
-	mac.SnipeitOffice14 = OfficeExists(mac)
+	mac.SnipeitOffice = OfficeExists(mac)
 
 	//Passando Regex antes de popular informação de Memória
 
@@ -68,14 +68,14 @@ func forMacOs(f *os.File) {
 	//Arredondando valor númerico da variável
 	MemoryRounded := math.Round(MemoryFloat)
 	//Populando campo de memória com o valor tratado
-	mac.SnipeitMema3Ria7 = strconv.Itoa(int(MemoryRounded)) + "GB"
+	mac.SnipeitMema3Ria = strconv.Itoa(int(MemoryRounded)) + "GB"
 
 	//Convertendo response de string para float
 	HDFloat, _ := strconv.ParseFloat(MacOS.Infos[4], 64)
 	//Arredondando valor númerico da variável
 	HDRounded := math.Round(HDFloat)
 	//Populando campo de HD com o valor tratado
-	mac.SnipeitHd9 = strconv.Itoa(int(HDRounded)) + "GB"
+	mac.SnipeitHd = strconv.Itoa(int(HDRounded)) + "GB"
 
 	//Passando Regex antes de popular informação de Asset Tag
 	mac.AssetTag = regexs.RegexAssettagDigit.FindString(MacOS.Infos[1])
@@ -107,7 +107,7 @@ func forMacOs(f *os.File) {
 	for in, v := range globals.MacOSVersions {
 
 		if SOString == in {
-			mac.SnipeitSo8 = v
+			mac.SnipeitSo = v
 			break
 		}
 
@@ -116,7 +116,7 @@ func forMacOs(f *os.File) {
 	//Entrada Default
 	mac.ModelID = globals.ID_MODELO
 	mac.StatusID = globals.ID_STATUS
-	mac.SnipeitModel12 = globals.MODELO_ATIVO
+	mac.SnipeitModel = globals.MODELO_ATIVO
 
 	VerifyIfnotEmpty(mac)
 
@@ -157,20 +157,20 @@ func forWindows(f *os.File) {
 	win := snipe.NewActive()
 
 	//Populando Struct
-	win.SnipeitCPU11 = Windows.Infos[2]
+	win.SnipeitCPU = Windows.Infos[2]
 
-	win.SnipeitMema3Ria7 = Windows.Infos[5] + "GB"
+	win.SnipeitMema3Ria = Windows.Infos[5] + "GB"
 
-	win.SnipeitSo8 = Windows.Infos[4]
+	win.SnipeitSo = Windows.Infos[4]
 
-	win.SnipeitHostname10 = Windows.Infos[0]
+	win.SnipeitHostname = Windows.Infos[0]
 
 	win.Name = Windows.Infos[0]
-	win.SnipeitHd9 = Windows.Infos[3] + "GB"
+	win.SnipeitHd = Windows.Infos[3] + "GB"
 
 	win.AssetTag = Windows.Infos[1]
 
-	win.SnipeitProgramasInstalados15 = Windows.ProgramasWin
+	win.SnipeitProgramasInstalados = Windows.ProgramasWin
 
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
@@ -182,7 +182,7 @@ func forWindows(f *os.File) {
 	//Entrada Default
 	win.ModelID = globals.ID_MODELO
 	win.StatusID = globals.ID_STATUS
-	win.SnipeitModel12 = globals.MODELO_ATIVO
+	win.SnipeitModel = globals.MODELO_ATIVO
 
 	VerifyIfnotEmpty(win)
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
@@ -223,12 +223,12 @@ func forLinux(f *os.File) {
 	lin := snipe.NewActive()
 
 	//Populando Struct
-	lin.SnipeitCPU11 = Linux.Infos[0]
-	lin.SnipeitSo8 = Linux.Infos[2]
-	lin.SnipeitHostname10 = Linux.Infos[3]
+	lin.SnipeitCPU = Linux.Infos[0]
+	lin.SnipeitSo = Linux.Infos[2]
+	lin.SnipeitHostname = Linux.Infos[3]
 	lin.Name = Linux.Infos[3]
-	lin.SnipeitHd9 = Linux.Infos[5]
-	lin.SnipeitMema3Ria7 = Linux.Infos[1]
+	lin.SnipeitHd = Linux.Infos[5]
+	lin.SnipeitMema3Ria = Linux.Infos[1]
 	lin.AssetTag = Linux.Infos[4]
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if lin.AssetTag == "" {
@@ -240,7 +240,7 @@ func forLinux(f *os.File) {
 	//Entrada Default
 	lin.ModelID = globals.ID_MODELO
 	lin.StatusID = globals.ID_STATUS
-	lin.SnipeitModel12 = globals.MODELO_ATIVO
+	lin.SnipeitModel = globals.MODELO_ATIVO
 
 	VerifyIfnotEmpty(lin)
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
@@ -270,8 +270,8 @@ func forLinux(f *os.File) {
 }
 
 func VerifyIfnotEmpty(Active *snipe.CollectionT) {
-	ProgramasInstalados := Active.SnipeitProgramasInstalados15
-	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12, Active.SnipeitOffice14, ProgramasInstalados}
+	ProgramasInstalados := Active.SnipeitProgramasInstalados
+	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice, ProgramasInstalados}
 	var EmptyField string
 	var EmptyCounter int
 	var EmptyList []string
@@ -331,7 +331,7 @@ func VerifyIfnotEmpty(Active *snipe.CollectionT) {
 
 func OfficeExists(Active *snipe.CollectionT) string {
 
-	ProgramasInstalados := strings.Split(Active.SnipeitProgramasInstalados15, " | ")
+	ProgramasInstalados := strings.Split(Active.SnipeitProgramasInstalados, " | ")
 	OfficeCounter := 0
 	for _, v := range ProgramasInstalados {
 
@@ -351,8 +351,8 @@ func OfficeExists(Active *snipe.CollectionT) string {
 }
 
 func DevExposeAll(Active *snipe.CollectionT) {
-	ProgramasInstalados := strings.Split(Active.SnipeitProgramasInstalados15, " | ")
-	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12, Active.SnipeitOffice14}
+	ProgramasInstalados := strings.Split(Active.SnipeitProgramasInstalados, " | ")
+	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice}
 
 	fmt.Println("HardWare Data")
 	for _, v := range ActiveIndexTotal {
