@@ -219,7 +219,7 @@ func forLinux(f *os.File) {
 	Linux.MainProgram()
 	Linux.Crontab()
 
-	//Variavel de Contrato
+	//Variável de Contrato
 	lin := snipe.NewActive()
 
 	//Populando Struct

@@ -247,7 +247,7 @@ type IDT struct {
 	ID int `json:"id"`
 }
 
-/*GET
+/* GET
 
 Busca o ID do Ativo Existente.*/
 func Getidbytag(assettag string, IP string) (ID int) {

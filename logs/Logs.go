@@ -191,33 +191,3 @@ func CreateDir(wg *sync.WaitGroup) {
 	os.Mkdir(HOME+"/"+globals.LOG_DIR_NAME, 0777)
 	wg.Done()
 }
-
-/*var errboolean bool = true
-_, err := os.Stat(os.Getenv("USERNAME") + "_logs")
-if os.IsNotExist(err) {
-	errboolean = false
-}
-if err != nil {
-	errboolean = false
-}
-_, boolean := os.LookupEnv("HOME")
-USERNAME := os.Getenv("USERNAME")
-if !(boolean && errboolean) {
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	CreateDir(wg)
-	wg.Wait()
-}
-HOME := os.Getenv("HOME")
-HOMELOGS := HOME + "/" + USERNAME + "_logs"
-
-Daytime := Today()
-
-logname := HOMELOGS + "/Logs" + Daytime + ".txt"
-
-outFile, err := os.OpenFile(logname, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
-if err != nil {
-	log.Println("error creating file", err)
-}
-log.SetOutput(outFile)
-return outFile*/
