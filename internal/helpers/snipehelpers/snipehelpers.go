@@ -11,23 +11,25 @@ import (
 	"strconv"
 	"strings"
 
+	globals "github.com/JVLAlves/Dinamize-Inventory/internal/app/globals"
+	"github.com/JVLAlves/Dinamize-Inventory/logs"
 	"github.com/rodaine/table"
 )
 
 //Modelo para coleta e envio de dados do computador.
 type CollectionT struct {
-	ModelID                      string `json:"model_id"`
-	StatusID                     string `json:"status_id"`
-	AssetTag                     string `json:"asset_tag"`
-	Name                         string `json:"name"`
-	SnipeitSo8                   string `json:"_snipeit_so_8"`
-	SnipeitModel12               string `json:"_snipeit_modelo_12"`
-	SnipeitHostname10            string `json:"_snipeit_hostname_10"`
-	SnipeitHd9                   string `json:"_snipeit_hd_9"`
-	SnipeitCPU11                 string `json:"_snipeit_cpu_11"`
-	SnipeitMema3Ria7             string `json:"_snipeit_mema3ria_7"`
-	SnipeitProgramasInstalados15 string `json:"_snipeit_programas_instalados_15"`
-	SnipeitOffice14              string `json:"_snipeit_office_14"`
+	ModelID                    string `json:"model_id"`
+	StatusID                   string `json:"status_id"`
+	AssetTag                   string `json:"asset_tag"`
+	Name                       string `json:"name"`
+	SnipeitSo                  string `json:"_snipeit_so_3"`
+	SnipeitModel               string `json:"_snipeit_modelo_7"`
+	SnipeitHostname            string `json:"_snipeit_hostname_5"`
+	SnipeitHd                  string `json:"_snipeit_hd_4"`
+	SnipeitCPU                 string `json:"_snipeit_cpu_6"`
+	SnipeitMemoria             string `json:"_snipeit_memoria_2"`
+	SnipeitProgramasInstalados string `json:"_snipeit_programas_instalados_10"`
+	SnipeitOffice              string `json:"_snipeit_office_9"`
 }
 
 //Modelo geral de RESPONSE
@@ -251,10 +253,14 @@ type IDT struct {
 
 Busca o ID do Ativo Existente.*/
 func Getidbytag(assettag string, IP string) (ID int) {
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Getidbytag()"
+
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -265,11 +271,21 @@ func Getidbytag(assettag string, IP string) (ID int) {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
+
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON (reponse), a função que o recebeu (Getidbytag()), e o struct o qual será populado com as informações (IDT{})
+		log.Printf("\n\nJSON (response, getidbytag(), IDT{}):\n %v\n\n", string(body))
+	}
 
 	if err != nil {
 		log.Println("Error on parsing response.\n[ERROR] -", err)
@@ -298,10 +314,14 @@ Ao comparar ambos A. Existente e A. Criado ele destaca as disparidades e as reto
 OBS: Patchrequest é um JSON padronizado especificamente para o envio através do método PATCH.*/
 func Getbytag(IP string, assettag string) *CollectionT {
 
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Getbytag()"
+
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -312,12 +332,23 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
+
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, Getbytag(), UniversalGetT{}):\n %v\n\n", string(body))
+	}
+
 	io.MultiReader()
 	if err != nil {
 		log.Println("Error on parsing response.\n[ERROR] -", err)
@@ -340,13 +371,13 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	ExistentActive.AssetTag = responsevar.AssetTag
 	ExistentActive.ModelID = strconv.Itoa(responsevar.Model.ID)
 	ExistentActive.StatusID = strconv.Itoa(responsevar.StatusLabel.ID)
-	ExistentActive.SnipeitMema3Ria7 = responsevar.CustomFields.MemRia.Value
-	ExistentActive.SnipeitSo8 = responsevar.CustomFields.SO.Value
-	ExistentActive.SnipeitHd9 = responsevar.CustomFields.Hd.Value
-	ExistentActive.SnipeitHostname10 = responsevar.CustomFields.Hostname.Value
-	ExistentActive.SnipeitCPU11 = responsevar.CustomFields.CPU.Value
-	ExistentActive.SnipeitModel12 = responsevar.CustomFields.Modelo.Value
-	ExistentActive.SnipeitProgramasInstalados15 = responsevar.CustomFields.ProgramasInstalados.Value
+	ExistentActive.SnipeitMemoria = responsevar.CustomFields.MemRia.Value
+	ExistentActive.SnipeitSo = responsevar.CustomFields.SO.Value
+	ExistentActive.SnipeitHd = responsevar.CustomFields.Hd.Value
+	ExistentActive.SnipeitHostname = responsevar.CustomFields.Hostname.Value
+	ExistentActive.SnipeitCPU = responsevar.CustomFields.CPU.Value
+	ExistentActive.SnipeitModel = responsevar.CustomFields.Modelo.Value
+	ExistentActive.SnipeitProgramasInstalados = responsevar.CustomFields.ProgramasInstalados.Value
 
 	return &ExistentActive
 
@@ -356,8 +387,8 @@ func (Active *CollectionT) ComparePrograms(f io.Writer, ExistentActive *Collecti
 
 	var IsDifferent bool = false
 
-	ExistentActivePrograms := strings.Split(ExistentActive.SnipeitProgramasInstalados15, " | ")
-	ActivePrograms := strings.Split(Active.SnipeitProgramasInstalados15, " | ")
+	ExistentActivePrograms := strings.Split(ExistentActive.SnipeitProgramasInstalados, " | ")
+	ActivePrograms := strings.Split(Active.SnipeitProgramasInstalados, " | ")
 
 	tbl := table.New("STATUS", "PROGRAMA")
 
@@ -374,7 +405,7 @@ func (Active *CollectionT) ComparePrograms(f io.Writer, ExistentActive *Collecti
 
 	if IsDifferent {
 
-		var PatchrequestSlice string = ", \"_snipeit_programas_instalados_15\":\""
+		var PatchrequestSlice string = ", \"_snipeit_programas_instalados_10\":\""
 
 		fmt.Fprintln(f, "Programa(s) desconhecido(s) encontrado(s). Refazendo lista de programas instalados.")
 
@@ -411,10 +442,10 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 
 	var IsDifferent bool = false
 	//Variável Array com as informações do Struct de análise
-	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMema3Ria7, ExistentActive.SnipeitSo8, ExistentActive.SnipeitHd9, ExistentActive.SnipeitHostname10, ExistentActive.SnipeitCPU11, ExistentActive.SnipeitModel12}
+	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMemoria, ExistentActive.SnipeitSo, ExistentActive.SnipeitHd, ExistentActive.SnipeitHostname, ExistentActive.SnipeitCPU, ExistentActive.SnipeitModel}
 
 	//Variável Array com as informações do Struct do Ativo Criado
-	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMemoria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
 
 	//Variavél Array que contém as alterações pendentes
 	var Pending []string
@@ -463,27 +494,27 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 					Fieldname = "STATUS ID"
 				case 4:
 					//Caso a disparidade seja encontrada no Index [4] do Array, é necessário PATCH no campo MEMÓRIA
-					Patchresquest += ",\"_snipeit_mema3ria_7\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_memoria_2\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MEMÓRIA"
 				case 5:
 					//Caso a disparidade seja encontrada no Index [5] do Array, é necessário PATCH no campo SISTEMA OPERACIONAL
-					Patchresquest += ",\"_snipeit_so_8\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_so_3\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "SISTEMA OPERACIONAL"
 				case 6:
 					//Caso a disparidade seja encontrada no Index [6] do Array, é necessário PATCH no campo HD
-					Patchresquest += ",\"_snipeit_hd_9\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_hd_4\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "HD"
 				case 7:
 					//Caso a disparidade seja encontrada no Index [7] do Array, é necessário PATCH no campo HOSTNAME
-					Patchresquest += ",\"_snipeit_hostname_10\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_hostname_5\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "HOSTNAME"
 				case 8:
 					//Caso a disparidade seja encontrada no Index [8] do Array, é necessário PATCH no campo CPU
-					Patchresquest += ",\"_snipeit_cpu_11\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_cpu_6\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "CPU"
 				case 9:
 					//Caso a disparidade seja encontrada no Index [9] do Array, é necessário PATCH no campo MODELO
-					Patchresquest += ",\"_snipeit_modelo_12\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_modelo_7\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MODEL"
 				}
 
@@ -567,6 +598,11 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 
 Envia alterações feitas no ativo existente no inventário através de seu ID.*/
 func Patchbyid(id int, IP string, Patchresquest string) {
+
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Patchbyid()"
+
 	//Converte ID de string para int
 	StringID := strconv.Itoa(id)
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
@@ -580,7 +616,7 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 	}
 
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 
 	//HEADERs
 	req.Header.Add("Accept", "application/json")
@@ -590,11 +626,21 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
+
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, Patchbyid(), PatchResponseT{}):\n %v\n\n", string(body))
+	}
 
 	// Unmarshal do resultado do response
 	response := PatchResponseT{}
@@ -609,11 +655,16 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 
 Verifica se ativo existe procurando-o (GET) no inventário através do seu Asset Tag único.*/
 func Verifybytag(assettag string, IP string) bool {
+
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Verifybytag()"
+
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 
 	//Código de autenticação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
@@ -625,11 +676,21 @@ func Verifybytag(assettag string, IP string) bool {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
+
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, Verifybytag(), ErrorT{}):\n %v\n\n", string(body))
+	}
 
 	// Unmarshal do resultado do response
 	response := ErrorT{}
@@ -653,14 +714,17 @@ func Verifybytag(assettag string, IP string) bool {
 
 Envia os dados do computador para o inventário no Snipeit. (Essa função recebe a variavel que recebe o tipo struct criado com os dados do computador)*/
 func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Verifybytag()"
 
-	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria7, Active.SnipeitSo8, Active.SnipeitHd9, Active.SnipeitHostname10, Active.SnipeitCPU11, Active.SnipeitModel12}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMemoria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
 
 	//URL da API SnipeIt
 	url := "http://" + IP + "/api/v1/hardware"
 
 	// Token de autentiucação
-	var bearer = "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2NlMzRhNDM0OGNjMGRkMjczMWQyMDM0ZDQ4MzRkZTZiMTQ3MGI3ODE2YWQyM2RmMjRmMzg0YzE3ZjIzOWU1N2E5ZTg2N2E0ODhlMTg5YTEiLCJpYXQiOjE2MjY0MzU0MzYsIm5iZiI6MTYyNjQzNTQzNiwiZXhwIjoyMDk5ODIxMDM1LCJzdWIiOiIzIiwic2NvcGVzIjpbXX0.JtCQ_KStz4TluCkt_6JGJLmSGVhuY6dS_3OQ7KJicm8vSgYnfh2cwzrjjgoDU92u5RN2-fMHMji_ju6a4Lm33_nyj6_qclFV9SPRtO-UqMJe7EVkPhe0bP3co-9dVKyfUmSyi7GjVeHkUcD2OGG9m_zhu7krpwzQRBNiaNR9dJwCeBEbH1O13kKQItRl_V_-DDEtFF-bTnQ3DbnlEqZxtY4we6-qjpXmIrGmOU27pH5DUXZ8-cxqlAKP1ysBz_BJRBYGN0HZqYyL2AgrTG_k9sPds2CSyqPhbTvjm7yD5IxPOAcmasJbJoAPSyZecpNSecOL7JVsjB7UFcDPTdIy6zykIqJV6Zj-3qwkg4VrAt6iGvSIPCfSPzlydwk3o0znDHisp_9IDGuSTII49kAGnGb5Kw6WWsV9xQrXBtm6R41cwVAGc47r9j8tLux5PmlXdcrSxGS1uiiaMwZSx1ZdvZlC85f5LSpKiA0qP85acTX2R_Aav4oqsx_FN-UkBuBs8ADYC-sxMDVDuokr49IkkgVY9LUfkk8-pQX4IqKZKBOHuPAT1NsalgDPOZG9pFaIQ9kmt9Qm6TkkinNIPiwcBJ2mqHXziirtvQqylfrH2MBkXAofHK_-EEkOCAsARfFT41iw7wkJwW5ijliz5SC2ZiG6HTFS9WIG88WNiRzu9qc"
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 
 	//transformando em bytes a variável hw
 	hardwarePostJSON, err := json.Marshal(Active)
@@ -686,7 +750,11 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("Error on request.\n[ERROR] -", err)
+		Slogger.Fatalw("Error on request.",
+			"funcname", funcname,
+			"error", err,
+		)
+
 	}
 
 	//fechando o Response após a conclusão do código
@@ -694,6 +762,12 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	//lendo o RESQUEST
 	body, err := ioutil.ReadAll(resp.Body)
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, PostSnipe(), SnipeitResponse{}):\n %v\n\n", string(body))
+	}
 	//Tratando o ocasoional erro do request
 	if err != nil {
 		log.Println("Error on parsing response.\n[ERROR] -", err)
@@ -701,10 +775,13 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	// Unmarshal do resultado do response
 	response := SnipeitResponseT{}
+
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
 		return
+	} else {
+		log.Println(response.Status, response.Messages)
 	}
 
 	//Cria tabela com os Cabeçalhos "Fieldname" e "Ativo Existente"
@@ -754,7 +831,7 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	}
 
-	for _, v := range Active.SnipeitProgramasInstalados15 {
+	for _, v := range Active.SnipeitProgramasInstalados {
 
 		tblProgs.AddRow(v)
 
@@ -763,6 +840,7 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	//Expõe tabela do Ativo Existente
 	tbl.Print()
 	tblProgs.Print()
+
 	//Printando o Response
 	fmt.Println("Response do POST:", response)
 }
