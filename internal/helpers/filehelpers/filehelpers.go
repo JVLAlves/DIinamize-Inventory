@@ -11,7 +11,7 @@ import (
 )
 
 /*
-Define a data de hoje na forma Day/Month/Year e retorna um Daytime (Na forma: _Day_Month_Year) para nomear o arquivod e log
+Define a data de hoje na forma day/month/year e retorna um Daytime (Na forma: _Day_Month_Year) para nomear o arquivod e log
 */
 func Today() (Daytime string) {
 
