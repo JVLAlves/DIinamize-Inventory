@@ -48,6 +48,8 @@ func main() {
 
 //Função de execução do programa em MacOS
 func forMacOs(f *os.File) {
+	var availableAssetTag bool = true
+	var AnalysisMethod bool
 
 	//Chama função de coleta especificado MacOS
 	MacOS.MainProgram()
@@ -68,7 +70,11 @@ func forMacOs(f *os.File) {
 	//Arredondando valor númerico da variável
 	MemoryRounded := math.Round(MemoryFloat)
 	//Populando campo de memória com o valor tratado
+<<<<<<< HEAD
 	mac.SnipeitMema3Ria = strconv.Itoa(int(MemoryRounded)) + "GB"
+=======
+	mac.SnipeitMemoria = strconv.Itoa(int(MemoryRounded)) + "GB"
+>>>>>>> cf0bf1667f0ca139d83a2c11ba4c99bad8188cb4
 
 	//Convertendo response de string para float
 	HDFloat, _ := strconv.ParseFloat(MacOS.Infos[4], 64)
@@ -81,9 +87,9 @@ func forMacOs(f *os.File) {
 	mac.AssetTag = regexs.RegexAssettagDigit.FindString(MacOS.Infos[1])
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if mac.AssetTag == "" {
-		mac.AssetTag = "Inválido"
+		mac.AssetTag = "04040" //ID de assettag inválido
+		availableAssetTag = false
 		fmt.Fprintf(f, "Nenhum Asset Tag foi definido, pois nenhuma sequência numérica foi encontrada no HOSTNAME: %v", MacOS.Infos[0])
-
 	}
 
 	//Convertendo response de string para float
@@ -121,8 +127,15 @@ func forMacOs(f *os.File) {
 	VerifyIfnotEmpty(mac)
 
 	DevExposeAll(mac)
+
+	if availableAssetTag {
+		AnalysisMethod = snipe.Verifybytag(mac.AssetTag, globals.IP_SNIPEIT)
+	} else {
+		AnalysisMethod = true
+	}
+
 	//Verificando a existência de um ativo semelhante no inventário Snipe it
-	if snipe.Verifybytag(mac.AssetTag, globals.IP_SNIPEIT) {
+	if AnalysisMethod {
 		fmt.Fprintln(f, "Os dados do Ativo Criado não constam no sistema.")
 
 		//Caso o Ativo não exista no sistema, as informações são enviadas para tal.
@@ -159,7 +172,11 @@ func forWindows(f *os.File) {
 	//Populando Struct
 	win.SnipeitCPU = Windows.Infos[2]
 
+<<<<<<< HEAD
 	win.SnipeitMema3Ria = Windows.Infos[5] + "GB"
+=======
+	win.SnipeitMemoria = Windows.Infos[5] + "GB"
+>>>>>>> cf0bf1667f0ca139d83a2c11ba4c99bad8188cb4
 
 	win.SnipeitSo = Windows.Infos[4]
 
@@ -171,8 +188,11 @@ func forWindows(f *os.File) {
 	win.AssetTag = Windows.Infos[1]
 
 	win.SnipeitProgramasInstalados = Windows.ProgramasWin
+<<<<<<< HEAD
 
 	win.SnipeitOffice = OfficeExists(win)
+=======
+>>>>>>> cf0bf1667f0ca139d83a2c11ba4c99bad8188cb4
 
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
@@ -230,7 +250,11 @@ func forLinux(f *os.File) {
 	lin.SnipeitHostname = Linux.Infos[3]
 	lin.Name = Linux.Infos[3]
 	lin.SnipeitHd = Linux.Infos[5]
+<<<<<<< HEAD
 	lin.SnipeitMema3Ria = Linux.Infos[1]
+=======
+	lin.SnipeitMemoria = Linux.Infos[1]
+>>>>>>> cf0bf1667f0ca139d83a2c11ba4c99bad8188cb4
 	lin.AssetTag = Linux.Infos[4]
 	lin.SnipeitOffice = OfficeExists(lin)
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
@@ -274,7 +298,11 @@ func forLinux(f *os.File) {
 
 func VerifyIfnotEmpty(Active *snipe.CollectionT) {
 	ProgramasInstalados := Active.SnipeitProgramasInstalados
+<<<<<<< HEAD
 	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice, ProgramasInstalados}
+=======
+	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMemoria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice, ProgramasInstalados}
+>>>>>>> cf0bf1667f0ca139d83a2c11ba4c99bad8188cb4
 	var EmptyField string
 	var EmptyCounter int
 	var EmptyList []string
@@ -355,7 +383,11 @@ func OfficeExists(Active *snipe.CollectionT) string {
 
 func DevExposeAll(Active *snipe.CollectionT) {
 	ProgramasInstalados := strings.Split(Active.SnipeitProgramasInstalados, " | ")
+<<<<<<< HEAD
 	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice}
+=======
+	var ActiveIndexTotal = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMemoria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice}
+>>>>>>> cf0bf1667f0ca139d83a2c11ba4c99bad8188cb4
 
 	fmt.Println("HardWare Data")
 	for _, v := range ActiveIndexTotal {
@@ -368,5 +400,5 @@ func DevExposeAll(Active *snipe.CollectionT) {
 
 		fmt.Println(v)
 	}
-	log.Fatalln("Safe End")
+
 }
