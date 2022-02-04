@@ -29,6 +29,8 @@ const (
 	CRONTAB_CONTENT = "'" + `#!/bin/bash` + "\n" + CRONTAB_PERIOD + "'"
 	//Nome do diretório de Logs
 	LOG_DIR_NAME = APPNAME + "-Logs"
+	//Constante de visualização do formato dos JSONs
+	DEVVIEW = false
 )
 
 var (

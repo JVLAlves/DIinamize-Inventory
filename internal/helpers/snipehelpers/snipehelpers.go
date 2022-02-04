@@ -26,7 +26,7 @@ type CollectionT struct {
 	SnipeitHostname            string `json:"_snipeit_hostname_5"`
 	SnipeitHd                  string `json:"_snipeit_hd_4"`
 	SnipeitCPU                 string `json:"_snipeit_cpu_6"`
-	SnipeitMema3Ria            string `json:"_snipeit_mema3ria_2"`
+	SnipeitMema3Ria            string `json:"_snipeit_memoria_2"`
 	SnipeitProgramasInstalados string `json:"_snipeit_programas_instalados_10"`
 	SnipeitOffice              string `json:"_snipeit_office_9"`
 }
@@ -39,7 +39,7 @@ type SnipeitResponseT struct {
 		ModelID        int    `json:"model_id"`
 		Name           string `json:"name"`
 		Serial         string `json:"serial"`
-		CompanyID      string `json:"company_id"`
+		CompanyID      int    `json:"company_id"`
 		OrderNumber    string `json:"order_number"`
 		Notes          string `json:"notes"`
 		AssetTag       string `json:"asset_tag"`
@@ -108,7 +108,7 @@ type PatchResponseT struct {
 		Accepted             string `json:"accepted"`
 		LastCheckout         string `json:"last_checkout"`
 		ExpectedCheckin      string `json:"expected_checkin"`
-		CompanyID            string `json:"company_id"`
+		CompanyID            int    `json:"company_id"`
 		AssignedType         string `json:"assigned_type"`
 		LastAuditDate        string `json:"last_audit_date"`
 		NextAuditDate        string `json:"next_audit_date"`
@@ -150,12 +150,21 @@ type UniversalGetT struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"manufacturer"`
-	Supplier        string `json:"supplier"`
-	Notes           string `json:"notes"`
-	OrderNumber     string `json:"order_number"`
-	Company         string `json:"company"`
-	Location        string `json:"location"`
-	RtdLocation     string `json:"rtd_location"`
+	Supplier    string `json:"supplier"`
+	Notes       string `json:"notes"`
+	OrderNumber string `json:"order_number"`
+	Company     struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"company"`
+	Location struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"location"`
+	RtdLocation struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"rtd_location"`
 	Image           string `json:"image"`
 	AssignedTo      string `json:"assigned_to"`
 	WarrantyMonths  string `json:"warranty_months"`
@@ -168,11 +177,14 @@ type UniversalGetT struct {
 		Datetime  string `json:"datetime"`
 		Formatted string `json:"formatted"`
 	} `json:"updated_at"`
-	LastAuditDate   string `json:"last_audit_date"`
-	NextAuditDate   string `json:"next_audit_date"`
-	DeletedAt       string `json:"deleted_at"`
-	PurchaseDate    string `json:"purchase_date"`
-	LastCheckout    string `json:"last_checkout"`
+	LastAuditDate string `json:"last_audit_date"`
+	NextAuditDate string `json:"next_audit_date"`
+	DeletedAt     string `json:"deleted_at"`
+	PurchaseDate  string `json:"purchase_date"`
+	LastCheckout  struct {
+		Datetime  string `json:"datetime"`
+		Formatted string `json:"formatted"`
+	} `json:"last_checkout"`
 	ExpectedCheckin string `json:"expected_checkin"`
 	PurchaseCost    string `json:"purchase_cost"`
 	CheckinCounter  int    `json:"checkin_counter"`
@@ -204,7 +216,7 @@ type UniversalGetT struct {
 			Field       string `json:"field"`
 			Value       string `json:"value"`
 			FieldFormat string `json:"field_format"`
-		} `json:"Memória"`
+		} `json:"Memoria"`
 		SO struct {
 			Field       string `json:"field"`
 			Value       string `json:"value"`
@@ -272,6 +284,11 @@ func Getidbytag(assettag string, IP string) (ID int) {
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
+	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
+	if globals.DEVVIEW {
+		log.Printf("\nJSON de Response (-getidbytag()-):\n %v\n", string(body))
+	}
+
 	if err != nil {
 		log.Println("Error on parsing response.\n[ERROR] -", err)
 	}
@@ -319,6 +336,12 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
+
+	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
+	if globals.DEVVIEW {
+		log.Printf("\nJSON de Response (-getbytag()-):\n %v\n", string(body))
+	}
+
 	io.MultiReader()
 	if err != nil {
 		log.Println("Error on parsing response.\n[ERROR] -", err)
@@ -328,7 +351,7 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	var responsevar UniversalGetT
 
 	// Unmarshal do resultado do response
-	err = json.Unmarshal(body, &responsevar)
+	err = json.Unmarshal(body, &responsevar) //<-- UniversalGetT Needs to be remade.
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
 	}
@@ -348,6 +371,7 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	ExistentActive.SnipeitCPU = responsevar.CustomFields.CPU.Value
 	ExistentActive.SnipeitModel = responsevar.CustomFields.Modelo.Value
 	ExistentActive.SnipeitProgramasInstalados = responsevar.CustomFields.ProgramasInstalados.Value
+	ExistentActive.SnipeitOffice = responsevar.CustomFields.Office.Value
 
 	return &ExistentActive
 
@@ -412,10 +436,10 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 
 	var IsDifferent bool = false
 	//Variável Array com as informações do Struct de análise
-	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMema3Ria, ExistentActive.SnipeitSo, ExistentActive.SnipeitHd, ExistentActive.SnipeitHostname, ExistentActive.SnipeitCPU, ExistentActive.SnipeitModel}
+	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMema3Ria, ExistentActive.SnipeitSo, ExistentActive.SnipeitHd, ExistentActive.SnipeitHostname, ExistentActive.SnipeitCPU, ExistentActive.SnipeitModel, ExistentActive.SnipeitOffice, ExistentActive.SnipeitProgramasInstalados}
 
 	//Variável Array com as informações do Struct do Ativo Criado
-	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice, Active.SnipeitProgramasInstalados}
 
 	//Variavél Array que contém as alterações pendentes
 	var Pending []string
@@ -464,28 +488,36 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 					Fieldname = "STATUS ID"
 				case 4:
 					//Caso a disparidade seja encontrada no Index [4] do Array, é necessário PATCH no campo MEMÓRIA
-					Patchresquest += ",\"_snipeit_mema3ria_7\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_memoria_2\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MEMÓRIA"
 				case 5:
 					//Caso a disparidade seja encontrada no Index [5] do Array, é necessário PATCH no campo SISTEMA OPERACIONAL
-					Patchresquest += ",\"_snipeit_so_8\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_so_3\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "SISTEMA OPERACIONAL"
 				case 6:
 					//Caso a disparidade seja encontrada no Index [6] do Array, é necessário PATCH no campo HD
-					Patchresquest += ",\"_snipeit_hd_9\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_hd_4\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "HD"
 				case 7:
 					//Caso a disparidade seja encontrada no Index [7] do Array, é necessário PATCH no campo HOSTNAME
-					Patchresquest += ",\"_snipeit_hostname_10\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_hostname_5\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "HOSTNAME"
 				case 8:
 					//Caso a disparidade seja encontrada no Index [8] do Array, é necessário PATCH no campo CPU
-					Patchresquest += ",\"_snipeit_cpu_11\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_cpu_6\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "CPU"
 				case 9:
 					//Caso a disparidade seja encontrada no Index [9] do Array, é necessário PATCH no campo MODELO
-					Patchresquest += ",\"_snipeit_modelo_12\":\"" + ActiveIndex[i] + "\""
+					Patchresquest += ",\"_snipeit_modelo_7\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MODEL"
+				case 10:
+					//Caso a disparidade seja encontrada no Index [10] do Array, é necessário PATCH no campo OFFICE
+					Patchresquest += ",\"_snipeit_office_9\":\"" + ActiveIndex[i] + "\""
+					Fieldname = "OFFICE"
+				case 11:
+					//Caso a disparidade seja encontrada no Index [11] do Array, é necessário PATCH no campo PROGRAMAS INSTALADOS
+					Patchresquest += ",\"_snipeit_programas_instalados_10\":\"" + ActiveIndex[i] + "\""
+					Fieldname = "PROGRAMAS INSTALADOS"
 				}
 
 				//Acrescenta informações a tabela
@@ -550,6 +582,12 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 			case 9:
 
 				Fieldname = "MODEL"
+			case 10:
+
+				Fieldname = "OFFICE"
+			case 11:
+
+				Fieldname = "PROGRAMAS INSTALADOS"
 			}
 
 			//Acrescenta informações a tabela
@@ -596,6 +634,10 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
+	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
+	if globals.DEVVIEW {
+		log.Printf("\nJSON de Response (-patchbyid()-):\n %v\n", string(body))
+	}
 
 	// Unmarshal do resultado do response
 	response := PatchResponseT{}
@@ -631,6 +673,11 @@ func Verifybytag(assettag string, IP string) bool {
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
+
+	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
+	if globals.DEVVIEW {
+		log.Printf("\nJSON de Response (-verifybytag()-):\n %v\n", string(body))
+	}
 
 	// Unmarshal do resultado do response
 	response := ErrorT{}
@@ -695,6 +742,12 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	//lendo o RESQUEST
 	body, err := ioutil.ReadAll(resp.Body)
+
+	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
+	if globals.DEVVIEW {
+		log.Printf("\nJSON de Response (-postsnipe()-):\n %v\n", string(body))
+	}
+
 	//Tratando o ocasoional erro do request
 	if err != nil {
 		log.Println("Error on parsing response.\n[ERROR] -", err)

@@ -172,6 +172,8 @@ func forWindows(f *os.File) {
 
 	win.SnipeitProgramasInstalados = Windows.ProgramasWin
 
+	win.SnipeitOffice = OfficeExists(win)
+
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
 		win.AssetTag = "Inválido"
@@ -230,6 +232,7 @@ func forLinux(f *os.File) {
 	lin.SnipeitHd = Linux.Infos[5]
 	lin.SnipeitMema3Ria = Linux.Infos[1]
 	lin.AssetTag = Linux.Infos[4]
+	lin.SnipeitOffice = OfficeExists(lin)
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if lin.AssetTag == "" {
 		lin.AssetTag = "No Asset Tag"
