@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	globals "github.com/JVLAlves/Dinamize-Inventory/internal/app/globals"
+	"github.com/JVLAlves/Dinamize-Inventory/logs"
 	"github.com/rodaine/table"
 )
 
@@ -26,7 +27,7 @@ type CollectionT struct {
 	SnipeitHostname            string `json:"_snipeit_hostname_5"`
 	SnipeitHd                  string `json:"_snipeit_hd_4"`
 	SnipeitCPU                 string `json:"_snipeit_cpu_6"`
-	SnipeitMema3Ria            string `json:"_snipeit_memoria_2"`
+	SnipeitMemoria             string `json:"_snipeit_memoria_2"`
 	SnipeitProgramasInstalados string `json:"_snipeit_programas_instalados_10"`
 	SnipeitOffice              string `json:"_snipeit_office_9"`
 }
@@ -264,10 +265,14 @@ type IDT struct {
 
 Busca o ID do Ativo Existente.*/
 func Getidbytag(assettag string, IP string) (ID int) {
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Getidbytag()"
+
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 	//Código de autenticação
-	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -278,15 +283,20 @@ func Getidbytag(assettag string, IP string) (ID int) {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
-	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
-	if globals.DEVVIEW {
-		log.Printf("\nJSON de Response (-getidbytag()-):\n %v\n", string(body))
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON (reponse), a função que o recebeu (Getidbytag()), e o struct o qual será populado com as informações (IDT{})
+		log.Printf("\n\nJSON (response, getidbytag(), IDT{}):\n %v\n\n", string(body))
 	}
 
 	if err != nil {
@@ -316,10 +326,15 @@ Ao comparar ambos A. Existente e A. Criado ele destaca as disparidades e as reto
 OBS: Patchrequest é um JSON padronizado especificamente para o envio através do método PATCH.*/
 func Getbytag(IP string, assettag string) *CollectionT {
 
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Getbytag()"
+
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 	//Código de autenticação
-	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
+
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -330,16 +345,21 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
 
-	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
-	if globals.DEVVIEW {
-		log.Printf("\nJSON de Response (-getbytag()-):\n %v\n", string(body))
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, Getbytag(), UniversalGetT{}):\n %v\n\n", string(body))
 	}
 
 	io.MultiReader()
@@ -364,7 +384,7 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	ExistentActive.AssetTag = responsevar.AssetTag
 	ExistentActive.ModelID = strconv.Itoa(responsevar.Model.ID)
 	ExistentActive.StatusID = strconv.Itoa(responsevar.StatusLabel.ID)
-	ExistentActive.SnipeitMema3Ria = responsevar.CustomFields.MemRia.Value
+	ExistentActive.SnipeitMemoria = responsevar.CustomFields.MemRia.Value
 	ExistentActive.SnipeitSo = responsevar.CustomFields.SO.Value
 	ExistentActive.SnipeitHd = responsevar.CustomFields.Hd.Value
 	ExistentActive.SnipeitHostname = responsevar.CustomFields.Hostname.Value
@@ -372,7 +392,6 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	ExistentActive.SnipeitModel = responsevar.CustomFields.Modelo.Value
 	ExistentActive.SnipeitProgramasInstalados = responsevar.CustomFields.ProgramasInstalados.Value
 	ExistentActive.SnipeitOffice = responsevar.CustomFields.Office.Value
-
 	return &ExistentActive
 
 }
@@ -399,7 +418,7 @@ func (Active *CollectionT) ComparePrograms(f io.Writer, ExistentActive *Collecti
 
 	if IsDifferent {
 
-		var PatchrequestSlice string = ", \"_snipeit_programas_instalados_15\":\""
+		var PatchrequestSlice string = ", \"_snipeit_programas_instalados_10\":\""
 
 		fmt.Fprintln(f, "Programa(s) desconhecido(s) encontrado(s). Refazendo lista de programas instalados.")
 
@@ -436,10 +455,10 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 
 	var IsDifferent bool = false
 	//Variável Array com as informações do Struct de análise
-	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMema3Ria, ExistentActive.SnipeitSo, ExistentActive.SnipeitHd, ExistentActive.SnipeitHostname, ExistentActive.SnipeitCPU, ExistentActive.SnipeitModel, ExistentActive.SnipeitOffice, ExistentActive.SnipeitProgramasInstalados}
+	var ExistentActiveIndex = []string{ExistentActive.Name, ExistentActive.AssetTag, ExistentActive.ModelID, ExistentActive.StatusID, ExistentActive.SnipeitMemoria, ExistentActive.SnipeitSo, ExistentActive.SnipeitHd, ExistentActive.SnipeitHostname, ExistentActive.SnipeitCPU, ExistentActive.SnipeitModel}
 
 	//Variável Array com as informações do Struct do Ativo Criado
-	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel, Active.SnipeitOffice, Active.SnipeitProgramasInstalados}
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMemoria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
 
 	//Variavél Array que contém as alterações pendentes
 	var Pending []string
@@ -606,6 +625,11 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 
 Envia alterações feitas no ativo existente no inventário através de seu ID.*/
 func Patchbyid(id int, IP string, Patchresquest string) {
+
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Patchbyid()"
+
 	//Converte ID de string para int
 	StringID := strconv.Itoa(id)
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
@@ -619,7 +643,7 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 	}
 
 	//Código de autenticação
-	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 
 	//HEADERs
 	req.Header.Add("Accept", "application/json")
@@ -629,7 +653,10 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
@@ -637,6 +664,13 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
 	if globals.DEVVIEW {
 		log.Printf("\nJSON de Response (-patchbyid()-):\n %v\n", string(body))
+	}
+
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, Patchbyid(), PatchResponseT{}):\n %v\n\n", string(body))
 	}
 
 	// Unmarshal do resultado do response
@@ -652,11 +686,16 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 
 Verifica se ativo existe procurando-o (GET) no inventário através do seu Asset Tag único.*/
 func Verifybytag(assettag string, IP string) bool {
+
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Verifybytag()"
+
 	//Define URL (link da API com IP do servidor + Assettag para localização do Ativo)
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 
 	//Código de autenticação
-	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
@@ -668,15 +707,21 @@ func Verifybytag(assettag string, IP string) bool {
 	//Comunicação HTTP com o inventário
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Falha de conexão com o Host Snipeit.")
+		Slogger.Fatalw("Falha de conexão com o Host Snipeit.",
+			"funcname", funcname,
+			"error", err,
+		)
 	}
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
-	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
-	if globals.DEVVIEW {
-		log.Printf("\nJSON de Response (-verifybytag()-):\n %v\n", string(body))
+
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
+
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, Verifybytag(), ErrorT{}):\n %v\n\n", string(body))
 	}
 
 	// Unmarshal do resultado do response
@@ -701,14 +746,17 @@ func Verifybytag(assettag string, IP string) bool {
 
 Envia os dados do computador para o inventário no Snipeit. (Essa função recebe a variavel que recebe o tipo struct criado com os dados do computador)*/
 func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
-
-	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMema3Ria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
+	logs.InitLogger()
+	Slogger := logs.Slogger
+	funcname := "Verifybytag()"
+  
+	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMemoria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
 
 	//URL da API SnipeIt
 	url := "http://" + IP + "/api/v1/hardware"
 
 	// Token de autentiucação
-	var bearer = "Bearer " + globals.SNIPEIT_TOKEN
+	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
 
 	//transformando em bytes a variável hw
 	hardwarePostJSON, err := json.Marshal(Active)
@@ -734,7 +782,11 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("Error on request.\n[ERROR] -", err)
+		Slogger.Fatalw("Error on request.",
+			"funcname", funcname,
+			"error", err,
+		)
+
 	}
 
 	//fechando o Response após a conclusão do código
@@ -742,12 +794,12 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	//lendo o RESQUEST
 	body, err := ioutil.ReadAll(resp.Body)
+	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
+	if globals.DEVSHOWJSON {
 
-	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
-	if globals.DEVVIEW {
-		log.Printf("\nJSON de Response (-postsnipe()-):\n %v\n", string(body))
+		//Ao escrever, indicará o tipo de JSON, a função que o recebeu, e o struct o qual será populado com as informações.
+		log.Printf("\n\nJSON (response, PostSnipe(), SnipeitResponse{}):\n %v\n\n", string(body))
 	}
-
 	//Tratando o ocasoional erro do request
 	if err != nil {
 		log.Println("Error on parsing response.\n[ERROR] -", err)
@@ -755,10 +807,13 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 
 	// Unmarshal do resultado do response
 	response := SnipeitResponseT{}
+
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
 		return
+	} else {
+		log.Println(response.Status, response.Messages)
 	}
 
 	//Cria tabela com os Cabeçalhos "Fieldname" e "Ativo Existente"
@@ -817,6 +872,7 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	//Expõe tabela do Ativo Existente
 	tbl.Print()
 	tblProgs.Print()
+
 	//Printando o Response
 	fmt.Println("Response do POST:", response)
 }
