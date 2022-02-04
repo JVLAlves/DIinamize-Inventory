@@ -54,6 +54,9 @@ func MainProgram() {
 	//fechando o arquivo lido
 	file.Close()
 
+	//Lista de tamanhos de memoria
+	memoryRange := []float64{4.0, 6.0, 8.0, 12.0, 16.0, 32.0, 64.0, 128.0, 256.0}
+
 	//Executa o comando Script para escrever a sessão do terminal em arquivo txt (Tamanho do disco)
 	Memorycmd := exec.Command("bash", "-c", "free -h |grep Mem |awk '{print $2}'")
 	MemorycmdByt, err := Memorycmd.Output()
@@ -70,8 +73,33 @@ func MainProgram() {
 	MemoryFloat, _ := strconv.ParseFloat(MemoryRegex[1], 64)
 	//Arredondando valor númerico da variável
 	MemoryRounded := math.Round(MemoryFloat)
+
+	//Encontrando valor de mercado da memória.
+forloop:
+	for in, v := range memoryRange {
+		if in == 0 {
+			continue
+		}
+
+		switch {
+
+		case memoryRange[(in-1)] < MemoryRounded && MemoryRounded > v:
+
+			continue
+		case memoryRange[(in-1)] < MemoryRounded && MemoryRounded < v:
+
+			MemoryRounded = v
+			break forloop
+		case memoryRange[(in-1)] > MemoryRounded:
+
+			MemoryRounded = memoryRange[(in - 1)]
+			break forloop
+		}
+
+	}
+
 	//Populando campo de memória com o valor tratado
-	Memory := strconv.Itoa(int(MemoryRounded)) + "GB"
+	Memory := strconv.Itoa(int(MemoryRounded)) + " GB"
 
 	// adicionando informação encontrada no arquivo "tamanhoDoHd.txt" a variável
 	Infos = append(Infos, Memory)
@@ -118,7 +146,7 @@ func MainProgram() {
 	//Convertendo response de string para float
 	HDFloat, _ := strconv.ParseFloat(HDJoined, 64)
 	//Arredondando valor númerico da variável
-	HDRounded := math.Round(HDFloat)
+	HDRounded := math.Ceil(HDFloat/100) * 100
 	HD = strconv.Itoa(int(HDRounded)) + "GB"
 	// adicionando informação encontrada no arquivo "tamanhoDoDisco.txt" a variável
 	Infos = append(Infos, HD)

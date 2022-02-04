@@ -167,9 +167,7 @@ func forWindows(f *os.File) {
 
 	//Populando Struct
 	win.SnipeitCPU = Windows.Infos[2]
-
 	win.SnipeitMemoria = Windows.Infos[5] + "GB"
-
 	win.SnipeitSo = Windows.Infos[4]
 
 	win.SnipeitHostname = Windows.Infos[0]
@@ -180,6 +178,9 @@ func forWindows(f *os.File) {
 	win.AssetTag = Windows.Infos[1]
 
 	win.SnipeitProgramasInstalados = Windows.ProgramasWin
+
+	win.SnipeitOffice = OfficeExists(win)
+
 
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if win.AssetTag == "" {
@@ -239,6 +240,7 @@ func forLinux(f *os.File) {
 	lin.SnipeitHd = Linux.Infos[5]
 	lin.SnipeitMemoria = Linux.Infos[1]
 	lin.AssetTag = Linux.Infos[4]
+	lin.SnipeitOffice = OfficeExists(lin)
 	//Caso não haja digitos no campo HOSTNAME (Fonte do Asset Tag), o retorno do sistema é um Asset Tag Default (NO ASSET TAG)
 	if lin.AssetTag == "" {
 		lin.AssetTag = "No Asset Tag"

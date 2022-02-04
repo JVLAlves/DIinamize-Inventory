@@ -40,7 +40,7 @@ type SnipeitResponseT struct {
 		ModelID        int    `json:"model_id"`
 		Name           string `json:"name"`
 		Serial         string `json:"serial"`
-		CompanyID      string `json:"company_id"`
+		CompanyID      int    `json:"company_id"`
 		OrderNumber    string `json:"order_number"`
 		Notes          string `json:"notes"`
 		AssetTag       string `json:"asset_tag"`
@@ -109,7 +109,7 @@ type PatchResponseT struct {
 		Accepted             string `json:"accepted"`
 		LastCheckout         string `json:"last_checkout"`
 		ExpectedCheckin      string `json:"expected_checkin"`
-		CompanyID            string `json:"company_id"`
+		CompanyID            int    `json:"company_id"`
 		AssignedType         string `json:"assigned_type"`
 		LastAuditDate        string `json:"last_audit_date"`
 		NextAuditDate        string `json:"next_audit_date"`
@@ -151,12 +151,21 @@ type UniversalGetT struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"manufacturer"`
-	Supplier        string `json:"supplier"`
-	Notes           string `json:"notes"`
-	OrderNumber     string `json:"order_number"`
-	Company         string `json:"company"`
-	Location        string `json:"location"`
-	RtdLocation     string `json:"rtd_location"`
+	Supplier    string `json:"supplier"`
+	Notes       string `json:"notes"`
+	OrderNumber string `json:"order_number"`
+	Company     struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"company"`
+	Location struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"location"`
+	RtdLocation struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"rtd_location"`
 	Image           string `json:"image"`
 	AssignedTo      string `json:"assigned_to"`
 	WarrantyMonths  string `json:"warranty_months"`
@@ -169,11 +178,14 @@ type UniversalGetT struct {
 		Datetime  string `json:"datetime"`
 		Formatted string `json:"formatted"`
 	} `json:"updated_at"`
-	LastAuditDate   string `json:"last_audit_date"`
-	NextAuditDate   string `json:"next_audit_date"`
-	DeletedAt       string `json:"deleted_at"`
-	PurchaseDate    string `json:"purchase_date"`
-	LastCheckout    string `json:"last_checkout"`
+	LastAuditDate string `json:"last_audit_date"`
+	NextAuditDate string `json:"next_audit_date"`
+	DeletedAt     string `json:"deleted_at"`
+	PurchaseDate  string `json:"purchase_date"`
+	LastCheckout  struct {
+		Datetime  string `json:"datetime"`
+		Formatted string `json:"formatted"`
+	} `json:"last_checkout"`
 	ExpectedCheckin string `json:"expected_checkin"`
 	PurchaseCost    string `json:"purchase_cost"`
 	CheckinCounter  int    `json:"checkin_counter"`
@@ -205,7 +217,7 @@ type UniversalGetT struct {
 			Field       string `json:"field"`
 			Value       string `json:"value"`
 			FieldFormat string `json:"field_format"`
-		} `json:"Memória"`
+		} `json:"Memoria"`
 		SO struct {
 			Field       string `json:"field"`
 			Value       string `json:"value"`
@@ -322,6 +334,7 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	url := "http://" + IP + "/api/v1/hardware/bytag/" + assettag
 	//Código de autenticação
 	var bearer = "Bearer " + globals.SNIPEIT_AUTHENTIFICATION_TOKEN
+
 	//REQUEST do GET
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -358,7 +371,7 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	var responsevar UniversalGetT
 
 	// Unmarshal do resultado do response
-	err = json.Unmarshal(body, &responsevar)
+	err = json.Unmarshal(body, &responsevar) //<-- UniversalGetT Needs to be remade.
 	if err != nil {
 		log.Printf("Reading body failed: %s", err)
 	}
@@ -378,7 +391,7 @@ func Getbytag(IP string, assettag string) *CollectionT {
 	ExistentActive.SnipeitCPU = responsevar.CustomFields.CPU.Value
 	ExistentActive.SnipeitModel = responsevar.CustomFields.Modelo.Value
 	ExistentActive.SnipeitProgramasInstalados = responsevar.CustomFields.ProgramasInstalados.Value
-
+	ExistentActive.SnipeitOffice = responsevar.CustomFields.Office.Value
 	return &ExistentActive
 
 }
@@ -516,6 +529,14 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 					//Caso a disparidade seja encontrada no Index [9] do Array, é necessário PATCH no campo MODELO
 					Patchresquest += ",\"_snipeit_modelo_7\":\"" + ActiveIndex[i] + "\""
 					Fieldname = "MODEL"
+				case 10:
+					//Caso a disparidade seja encontrada no Index [10] do Array, é necessário PATCH no campo OFFICE
+					Patchresquest += ",\"_snipeit_office_9\":\"" + ActiveIndex[i] + "\""
+					Fieldname = "OFFICE"
+				case 11:
+					//Caso a disparidade seja encontrada no Index [11] do Array, é necessário PATCH no campo PROGRAMAS INSTALADOS
+					Patchresquest += ",\"_snipeit_programas_instalados_10\":\"" + ActiveIndex[i] + "\""
+					Fieldname = "PROGRAMAS INSTALADOS"
 				}
 
 				//Acrescenta informações a tabela
@@ -580,6 +601,12 @@ func (Active *CollectionT) Compare(f io.Writer, ExistentActive *CollectionT) (Pa
 			case 9:
 
 				Fieldname = "MODEL"
+			case 10:
+
+				Fieldname = "OFFICE"
+			case 11:
+
+				Fieldname = "PROGRAMAS INSTALADOS"
 			}
 
 			//Acrescenta informações a tabela
@@ -634,6 +661,10 @@ func Patchbyid(id int, IP string, Patchresquest string) {
 
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
+	//Se DEVVIEW for verdadeiro, mostra nos logs o JSON de response
+	if globals.DEVVIEW {
+		log.Printf("\nJSON de Response (-patchbyid()-):\n %v\n", string(body))
+	}
 
 	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
 	if globals.DEVSHOWJSON {
@@ -685,6 +716,7 @@ func Verifybytag(assettag string, IP string) bool {
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
+
 	//Caso a constante de desenvolvimento seja verdadeira, escre nos logs o JSON de response dessa função.
 	if globals.DEVSHOWJSON {
 
@@ -717,7 +749,7 @@ func PostSnipe(Active *CollectionT, IP string, f io.Writer) {
 	logs.InitLogger()
 	Slogger := logs.Slogger
 	funcname := "Verifybytag()"
-
+  
 	var ActiveIndex = []string{Active.Name, Active.AssetTag, Active.ModelID, Active.StatusID, Active.SnipeitMemoria, Active.SnipeitSo, Active.SnipeitHd, Active.SnipeitHostname, Active.SnipeitCPU, Active.SnipeitModel}
 
 	//URL da API SnipeIt
